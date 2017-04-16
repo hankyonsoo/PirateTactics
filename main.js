@@ -16,30 +16,67 @@ window.onload = function(){
     var game = new Core(960, 640); //この大きさだとモバイル端末でも遊べます
 
     /**
-     * ゲームにシーンを追加
+     * 必要なファイルを相対パスで引数に指定する。 ファイルはすべて、ゲームが始まる前にロードされる。
      */
-    var sceneGameMain = new Scene();
+    var mapFrame  = "./resources/mapframe.png";
+    game.preload(mapFrame);
 
-    /**
-    *ゲーム画像をロードします。
-    */
-    game.preload("./resources/boat.png")
+    var mapBackground00  = "./resources/map00.png";
+    game.preload(mapBackground00);
+
+    var mapTiles  = "./resources/maptiles.png";
+    game.preload(mapTiles);
 
     game.onload = function(){
-        /**
-        * スプライトを作成
-        */
-        var sprite = new Sprite(512,512);
-        sprite.x = 100;
-        sprite.y = 0;
 
-        /**
-        * imageにファイル画像ファイルを当てはまる
-        */
-        sprite.image = game.assets["./resources/boat.png"];
-        sceneGameMain.addChild(sprite);
+        var sceneGameMain = new Scene();
+
+        //枠
+        //960X640のスライドを作成
+        var frame = new Sprite(960, 640);
+        //枠の画像を読み込む
+        frame.image = game.assets[mapFrame];
+        //画面の枠を描画する
+        sceneGameMain.addChild(frame);
+
+        //背景
+        var background = new Sprite(64*13, 64*9);
+        //同様に背景も表示する。
+        background.image = game.assets[mapBackground00];
+        background.x = 64;
+        background.y = 10;
+        sceneGameMain.addChild(background);
+
+        //マス
+        var map = new Map(64, 64);
+        map.x = 64;
+        map.y = 10;
+
+        //ここでgameをgmaeに間違えるミス発生
+        map.image = game.assets[mapTiles];
+
+        var mapDisplayData = [
+            [3, 3, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0],
+            [3, 2, 0, 0, 2, 3, 3, 2, 0, 1, 0, 0, 0],
+            [3, 0, 4, 0, 2, 3, 3, 2, 0, 0, 0, 0, 0],
+            [3, 0, 0, 0, 0, 2, 2, 0, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 4, 0, 0, 0, 1, 1, 0, 4, 0],
+            [1, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2],
+            [0, 0, 0, 3, 3, 2, 0, 0, 0, 0, 4, 2, 3],
+            [0, 0, 0, 3, 3, 3, 2, 0, 0, 2, 2, 3, 3],
+        ];
+        map.loadData(mapDisplayData);
+
+        //マップの透明度を0.5にする。
+        map.opacity = 0.5
+
+        // マップをシーンに追加
+        sceneGameMain.addChild(map);
+
 
         game.pushScene(sceneGameMain);
-    }
+    };
+
     game.start();
 };
