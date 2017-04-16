@@ -19,7 +19,24 @@ window.onload = function(){
      * ゲームにシーンを追加
      */
     var sceneGameMain = new Scene();
-    game.pushScene(sceneGameMain);
 
+    game.preload("./resources/pirate00.png");
+
+    game.onload = function(){
+        /**
+        * スプライトを作成
+        */
+        var sprite = new Sprite(256,256);
+        sprite.x = 200;
+        sprite.y = 100;
+
+        /**
+        * imageにファイル画像ファイルを当てはまる
+        */
+        sprite.image = game.assets["./resources/pirate00.png"];
+        sceneGameMain.addChild(sprite);
+
+        game.pushScene(sceneGameMain);
+    }
     game.start();
 };
