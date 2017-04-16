@@ -20,20 +20,23 @@ window.onload = function(){
      */
     var sceneGameMain = new Scene();
 
-    game.preload("./resources/pirate00.png");
+    /**
+    *ゲーム画像をロードします。
+    */
+    game.preload("./resources/boat.png")
 
     game.onload = function(){
         /**
         * スプライトを作成
         */
-        var sprite = new Sprite(256,256);
-        sprite.x = 200;
-        sprite.y = 100;
+        var sprite = new Sprite(512,512);
+        sprite.x = 100;
+        sprite.y = 0;
 
         /**
         * imageにファイル画像ファイルを当てはまる
         */
-        sprite.image = game.assets["./resources/pirate00.png"];
+        sprite.image = game.assets["./resources/boat.png"];
         sceneGameMain.addChild(sprite);
 
         game.pushScene(sceneGameMain);
