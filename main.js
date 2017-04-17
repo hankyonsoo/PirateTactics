@@ -28,7 +28,7 @@ window.onload = function(){
     game.preload(mapTiles);
 
     var GameMap = Class.create({
-      initialize: function(scene, mapData) {
+      initialize: function(scene, mapData/*コンストラクタを定義*/) {
         //枠
         //960X640のスライドを作成
         var frame = new Sprite(960, 640);
@@ -54,8 +54,16 @@ window.onload = function(){
         tiles.loadData(mapData);
         tiles.opacity = 0.5;
         scene.addChild(tiles);
+
+        tiles.touchEnabled = true;//タッチを可能にする。
+        /**touchEnableではなく
+          *touchEnabledである
+          */
+        tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
+            alert("タッチ x:"+params.x +", y:"+params.y);
+        });
       },
-    })
+    });
 
     game.onload = function(){
 
