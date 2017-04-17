@@ -14,6 +14,7 @@ window.onload = function(){
      * 画面の大きさは 960ピクセル x 640ピクセル に設定する。
      */
     var game = new Core(960, 640); //この大きさだとモバイル端末でも遊べます
+    game.fps = 30; //一秒に何回を画面更新するのか
 
     /**
      * 必要なファイルを相対パスで引数に指定する。 ファイルはすべて、ゲームが始まる前にロードされる。
@@ -30,6 +31,9 @@ window.onload = function(){
     var shipsSpriteSheet  = "./resources/ships.png";
     game.preload(shipsSpriteSheet);
 
+    /**
+     * Map のマスの定義
+     */
     var tileTypes = {
       umi: {id: 0, name:"umi"},//海
       arai: {id: 1, name:"arai"},//荒い海
@@ -45,6 +49,7 @@ window.onload = function(){
         initialize: function(scene) {
             Sprite.call(this, 64, 64);
             this.image = game.assets[shipsSpriteSheet];
+            this.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
         }
     });
     /**
