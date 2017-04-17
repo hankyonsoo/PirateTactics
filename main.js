@@ -27,6 +27,9 @@ window.onload = function(){
     var mapTiles  = "./resources/maptiles.png";
     game.preload(mapTiles);
 
+    var shipsSpriteSheet  = "./resources/ships.png";
+    game.preload(shipsSpriteSheet);
+
     var tileTypes = {
       umi: {id: 0, name:"umi"},//海
       arai: {id: 1, name:"arai"},//荒い海
@@ -35,6 +38,15 @@ window.onload = function(){
       iwa: {id: 4,name:"iwa"},//岩
     }
 
+    /**
+    *船クラス
+    */
+    var Fune = Class.create(Sprite, {
+        initialize: function(scene) {
+            Sprite.call(this, 64, 64);
+            this.image = game.assets[shipsSpriteSheet];
+        }
+    });
     /**
     * マップクラス
     */
@@ -99,9 +111,14 @@ window.onload = function(){
           }
         }
         this.tiles.collisionData = mapCollisionData
+        //this.mapCollisionData = mapCollisionData
+
+        // playLayer
+        var playLayer = new Group()
+        scene.addChild(playLayer);
+        this.playLayer = playLayer;
 
         var self = this;
-
         tiles.touchEnabled = true;//タッチを可能にする。
         /**touchEnableではなく
           *touchEnabledである
@@ -112,13 +129,45 @@ window.onload = function(){
             self.ontouchend(params);
         });
       },
-      toLocalSpace:function(x,y) {
-        var localX = x -this.tiles.x;
-        var localY = y -this.tiles.y;
+      toLocalSpace:function(worldX,worldY) {
+        /**
+        *ワールド座標を与えるとローカル座標(localX, localY)を返す
+        */
+        var localX = worldX -this.tiles.x;
+        var localY = worldY -this.tiles.y;
         /**
         * ワールド座標からtilesの座標をマイナス
         */
         return {x:localX, y:localY}
+      },
+      toWorldSpace:function(localX, localY) {
+        /**
+        *ローカル座標を与えるとワールド座標(worldX,worldY)を返す
+        */
+        var worldX = localX + this.tiles.x;
+        var worldY = localY + this.tiles.y;
+        /**
+        * ローカル座標からtilesの座標をプラス
+        */
+        return {x:worldX, y:worldY}
+      },
+      getMapTileAtPosition:function(localX, localY) {
+        return {
+          /**
+          *ローカル座標を与えるとマス目(i,j)を返す
+          */
+          i: Math.floor(localX/64),
+          j: Math.floor(localY/64)
+        };
+      },
+      getMapPositionAtTile: function(i,j) {
+        return {
+          /**
+          *マス目を与えるとローカル座標(localX,localY)を返す
+          */
+          localX: i *64,
+          localY: j *64
+        };
       },
       getTileInfo:function(id) {
         for(t in tileTypes) {
@@ -126,6 +175,25 @@ window.onload = function(){
             return tileTypes[t];
           }
         }
+      },
+      addChild: function(object) {
+        //レイアーにオブジェクトを追加
+        this.playLayer.addChild(object);
+        //playLayerと言うグループも本にはないので自分で探す必要がある。
+      },
+      positionObject: function(object, i, j){
+
+        var position = this.getMapPositionAtTile(i,j);
+        //マスの位置からローカル座標を計算
+        var worldPosition = this.toWorldSpace(position.localX,position.localY);
+        //ローカル座標からワールド座標を計算
+
+        object.x = worldPosition.x;
+        object.y = worldPosition.y;
+
+      },
+      positionFune: function(fune, i, j) {
+        this.positionObject(fune, i, j);
       },
       ontouchend:function(params) {
         //collisionデータを利用して判定する。
@@ -140,6 +208,26 @@ window.onload = function(){
         var localPosition = this.toLocalSpace(params.x, params.y);
 
         var tileData = this.tiles.checkTile(localPosition.x, localPosition.y);
+        /**
+        *checkTile: function(x, y) {
+        *    if (x < 0 //xが0より小さい
+        *    || this.width <= x
+        *    || y < 0
+        *    || this.height <= y
+        *    ) {
+        *        return false;
+        *    }
+        *    var width = this._image.width;
+        *    var height = this._image.height;
+        *    var tileWidth = this._tileWidth || width;
+        *    var tileHeight = this._tileHeight || height;
+        *    x = x / tileWidth | 0;
+        *    y = y / tileHeight | 0;
+        *    //		return this._data[y][x];
+        *    var data = this._data[0];
+        *    return data[y][x];
+        *}
+        */
         var tileInfo = this.getTileInfo(tileData);
 
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
@@ -172,6 +260,14 @@ window.onload = function(){
         //ここでGameMapクラスを使う
         var map = new GameMap(sceneGameMain/*追加するシーン*/,mapDisplayData/*マスのデータを指定*/);
 
+        //船をシーンに追加
+        var fune = new Fune();
+        map.addChild(fune);
+        //ここでaddChildと言うファンションは本に記述されてないのでサンプルを見て
+        //自分で探す必要がある。
+        map.positionFune(fune, 3, 3);
+
+        //ゲームにシーンを追加
         game.pushScene(sceneGameMain);
     };
 
