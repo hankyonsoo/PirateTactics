@@ -27,17 +27,16 @@ window.onload = function(){
     var mapTiles  = "./resources/maptiles.png";
     game.preload(mapTiles);
 
-    game.onload = function(){
-
-        var sceneGameMain = new Scene();
-
+    var GameMap = Class.create({
+      initialize: function(scene, mapData) {
         //枠
         //960X640のスライドを作成
         var frame = new Sprite(960, 640);
         //枠の画像を読み込む
+        //frame.image = new Sprite(960, 640);<-エラー
         frame.image = game.assets[mapFrame];
         //画面の枠を描画する
-        sceneGameMain.addChild(frame);
+        scene.addChild(frame);
 
         //背景
         var background = new Sprite(64*13, 64*9);
@@ -45,17 +44,25 @@ window.onload = function(){
         background.image = game.assets[mapBackground00];
         background.x = 64;
         background.y = 10;
-        sceneGameMain.addChild(background);
+        scene.addChild(background);
 
         //マス
-        var map = new Map(64, 64);
-        map.x = 64;
-        map.y = 10;
+        var tiles = new Map(64,64);
+        tiles.image = game.assets[mapTiles];
+        tiles.x = 64;
+        tiles.y = 10;
+        tiles.loadData(mapData);
+        tiles.opacity = 0.5;
+        scene.addChild(tiles);
+      },
+    })
 
-        //ここでgameをgmaeに間違えるミス発生
-        map.image = game.assets[mapTiles];
+    game.onload = function(){
 
-        var mapDisplayData = [
+      var sceneGameMain = new Scene();
+
+      //マス
+      var mapDisplayData = [
             [3, 3, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0],
             [3, 2, 0, 0, 2, 3, 3, 2, 0, 1, 0, 0, 0],
             [3, 0, 4, 0, 2, 3, 3, 2, 0, 0, 0, 0, 0],
@@ -66,14 +73,9 @@ window.onload = function(){
             [0, 0, 0, 3, 3, 2, 0, 0, 0, 0, 4, 2, 3],
             [0, 0, 0, 3, 3, 3, 2, 0, 0, 2, 2, 3, 3],
         ];
-        map.loadData(mapDisplayData);
 
-        //マップの透明度を0.5にする。
-        map.opacity = 0.5
-
-        // マップをシーンに追加
-        sceneGameMain.addChild(map);
-
+        //ここでGameMapクラスを使う
+        var map = new GameMap(sceneGameMain/*追加するシーン*/,mapDisplayData/*マスのデータを指定*/);
 
         game.pushScene(sceneGameMain);
     };
