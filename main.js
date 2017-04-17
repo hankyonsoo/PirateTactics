@@ -144,8 +144,10 @@ window.onload = function(){
 
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
           alert("通れない、"+tileInfo.name);
+          console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         } else {
           alert("通れる、"+tileInfo.name);
+          console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         }
       },
     });
