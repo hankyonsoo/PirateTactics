@@ -58,6 +58,8 @@ window.onload = function(){
         tiles.touchEnabled = true;//タッチを可能にする。
         /**touchEnableではなく
           *touchEnabledである
+          *↓enchent.jsのイベント目録
+          *http://wise9.github.io/enchant.js/doc/core/ja/symbols/enchant.Event.html
           */
         tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
             alert("タッチ x:"+params.x +", y:"+params.y);
