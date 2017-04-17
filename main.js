@@ -27,6 +27,17 @@ window.onload = function(){
     var mapTiles  = "./resources/maptiles.png";
     game.preload(mapTiles);
 
+    var tileTypes = {
+      umi: {id: 0, name:"umi"},//海
+      arai: {id: 1, name:"arai"},//荒い海
+      asai: {id: 2, name:"asai"},//浅い海
+      riku: {id: 3, name:"riku"},//陸
+      iwa: {id: 4,name:"iwa"},//岩
+    }
+
+    /**
+    * マップクラス
+    */
     var GameMap = Class.create({
       initialize: function(scene, mapData/*コンストラクタを定義*/) {
         //枠
@@ -45,6 +56,7 @@ window.onload = function(){
         background.x = 64;
         background.y = 10;
         scene.addChild(background);
+        this.background = background;
 
         //マス
         var tiles = new Map(64,64);
@@ -54,6 +66,41 @@ window.onload = function(){
         tiles.loadData(mapData);
         tiles.opacity = 0.5;
         scene.addChild(tiles);
+        this.tiles = tiles;
+
+        //マップの大きさを保存
+        this.mapHeight = mapData.length;
+        this.mapWidth = mapData[0].length;
+
+        //元のマップデータから陸や岩のcollisionデータを生成
+        var mapCollisionData = [];
+        for(var j=0; j < this.mapHeight; j++) {
+          /**
+          * マップの縦の分だけループする
+          */
+          mapCollisionData[j] = []
+          for(var i=0; i < this.mapWidth; i++) {
+          /**
+          * マップの横の分だけループする。
+          */
+            if (mapData[j][i] == tileTypes.riku.id || mapData[j][i] == tileTypes.iwa.id) {
+              /**
+              * もしも「陸」または「岩」だったら
+              * 通行不可にする
+              */
+              mapCollisionData[j].push(1);
+            }
+            else {
+              /**
+              * それ以外は通行可
+              */
+              mapCollisionData[j].push(0);
+            }
+          }
+        }
+        this.tiles.collisionData = mapCollisionData
+
+        var self = this;
 
         tiles.touchEnabled = true;//タッチを可能にする。
         /**touchEnableではなく
@@ -62,8 +109,44 @@ window.onload = function(){
           *http://wise9.github.io/enchant.js/doc/core/ja/symbols/enchant.Event.html
           */
         tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
-            alert("タッチ x:"+params.x +", y:"+params.y);
+            self.ontouchend(params);
         });
+      },
+      toLocalSpace:function(x,y) {
+        var localX = x -this.tiles.x;
+        var localY = y -this.tiles.y;
+        /**
+        * ワールド座標からtilesの座標をマイナス
+        */
+        return {x:localX, y:localY}
+      },
+      getTileInfo:function(id) {
+        for(t in tileTypes) {
+          if (tileTypes[t].id == id) {
+            return tileTypes[t];
+          }
+        }
+      },
+      ontouchend:function(params) {
+        //collisionデータを利用して判定する。
+        /**
+        *if (this.hitTest(params.x, params.y) == true) {
+        *  alert("通れない")
+        *} else {
+        *  alert("通れる")
+        *}
+        *ここは本に書かれた内容まったく一致しなかったので自分でソース把握の後修正
+        */
+        var localPosition = this.toLocalSpace(params.x, params.y);
+
+        var tileData = this.tiles.checkTile(localPosition.x, localPosition.y);
+        var tileInfo = this.getTileInfo(tileData);
+
+        if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
+          alert("通れない、"+tileInfo.name);
+        } else {
+          alert("通れる、"+tileInfo.name);
+        }
       },
     });
 
