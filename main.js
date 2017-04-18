@@ -50,6 +50,15 @@ window.onload = function(){
             Sprite.call(this, 64, 64);
             this.image = game.assets[shipsSpriteSheet];
             this.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
+
+            this.stats = {
+              //移動力を表すプロパティを追加
+              movement: 3,
+            };
+        },
+        getMovement() {
+          //移動を取得するメソッド
+          return this.stats.movement;
         }
     });
     /**
@@ -187,7 +196,10 @@ window.onload = function(){
         //playLayerと言うグループも本にはないので自分で探す必要がある。
       },
       positionObject: function(object, i, j){
-
+        /**
+        *オブジェクトのi,jの位置を記憶するためのmap.positionObject
+        *を少し変更する。
+        */
         var position = this.getMapPositionAtTile(i,j);
         //マスの位置からローカル座標を計算
         var worldPosition = this.toWorldSpace(position.localX,position.localY);
@@ -196,9 +208,19 @@ window.onload = function(){
         object.x = worldPosition.x;
         object.y = worldPosition.y;
 
+        object.i = i;//iを保存
+        object.j = j;//jを保存
       },
       positionFune: function(fune, i, j) {
         this.positionObject(fune, i, j);
+      },
+      setActiveFune: function(fune) {
+        this.activeFune = fune;
+      },
+      getManhattanDistance: function(startI, startJ, endI, endJ) {
+        var distance = Math.abs(startI - endI) +Math.abs(startJ -endJ);
+        //Math.absは絶対値を返しますIの距離とJの絶対値を足します。
+        return distance;
       },
       ontouchend:function(params) {
         //collisionデータを利用して判定する。
@@ -236,10 +258,19 @@ window.onload = function(){
         var tileInfo = this.getTileInfo(tileData);
 
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
+          //動かせないマスであればメッセージを表示
           alert("通れない、"+tileInfo.name);
           console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         } else {
-          alert("通れる、"+tileInfo.name);
+          //動かせる時はクリックした位置からタイルの情報を習得
+          var tile = this.getMapTileAtPosition(localPosition.x, localPosition.y);
+          /**
+          *船を指定位置まで移動させる
+          */
+          if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement())
+          {
+            this.positionFune(this.activeFune, tile.i, tile.j);
+          }
           console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         }
       },
@@ -271,6 +302,7 @@ window.onload = function(){
         //ここでaddChildと言うファンションは本に記述されてないのでサンプルを見て
         //自分で探す必要がある。
         map.positionFune(fune, 3, 3);
+        map.setActiveFune(fune);
 
         //ゲームにシーンを追加
         game.pushScene(sceneGameMain);
