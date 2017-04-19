@@ -133,6 +133,12 @@ window.onload = function(){
         this.tiles.collisionData = mapCollisionData
         //this.mapCollisionData = mapCollisionData
 
+        // underLayer
+        var underLayer = new Group();
+        underLayer.touchEnabled = false;
+        scene.addChild(underLayer);
+        this.underLayer = underLayer;
+
         // playLayer
         var playLayer = new Group()
         scene.addChild(playLayer);
@@ -241,6 +247,7 @@ window.onload = function(){
       },
       setActiveFune: function(fune) {
         this.activeFune = fune;
+        this.drawMovementRange()
       },
       outOfBorders: function(i, j) {
           if (i < 0) return true;
@@ -254,6 +261,62 @@ window.onload = function(){
         var distance = Math.abs(startI - endI) +Math.abs(startJ -endJ);
         //Math.absは絶対値を返しますIの距離とJの絶対値を足します。
         return distance;
+      },
+      drawMovementRange: function(){
+        console.log("update drawMovementRange")
+
+        if (this.areaRangeLayer) {
+          /**
+          * 移動範囲を示すレイヤーがあったら消す
+          */
+          this.underLayer.removeChild(this.areaRangeLayer);
+          delete this.areaRangeLayer;
+        }
+        this.areaRangeLayer = new Group();
+        this.underLayer.addChild(this.areaRangeLayer);
+        /**
+        *現在位置を中心にした四角形を左下から右上の順に調べる
+        */
+        for (var rangeI = -this.activeFune.getMovement(); rangeI <= this.activeFune.getMovement(); rangeI++) {
+          var targetI = this.activeFune.i +rangeI;
+          for (var rangeJ = -this.activeFune.getMovement(); rangeJ <= this.activeFune.getMovement(); rangeJ++) {
+            var targetJ = this.activeFune.j + rangeJ;
+
+            if (!this.outOfBorders(targetI, targetJ)) {
+              /**
+              * outOfBordersでマップ内であることを確認
+              */
+              if (this.getManhattanDistance(this.activeFune.i,
+              this.activeFune.j, targetI, targetJ) <=
+              this.activeFune.getMovement()) {
+                /**
+                *さらにgetManhattanDistanceで調べて移動力以内ならば
+                */
+                var areaSprite = new Sprite(64, 64);
+                areaSprite.touchEnabled = false;
+                areaSprite.image = game.assets[mapUI]
+                /**
+                *　移動可能範囲をしますスプライトを作成
+                */
+                var position = this.getMapPositionAtTile(targetI,
+                targetJ);
+
+                /**
+                *岩や陸のマスであれば
+                */
+                if (this.tiles.hitTest(position.localX, position.localY) == true) {
+                  areaSprite.frame = 3;
+                  //赤く表示
+                } else {
+                  areaSprite.frame = 2;
+                  //そうでなければ白く表示
+                }
+                this.positonObject(areaSprite, targetI, targetJ);
+                this.areaRangeLayer.addChild(areaSprite);
+              }
+            }
+          }
+        }
       },
       ontouchend:function(params) {
         if (this.mapMarker) {
@@ -310,6 +373,7 @@ window.onload = function(){
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement())
           {
             this.positionFune(this.activeFune, tile.i, tile.j);
+            this.drawMovementRange();
           }
           console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         }
