@@ -31,6 +31,12 @@ window.onload = function(){
     var shipsSpriteSheet  = "./resources/ships.png";
     game.preload(shipsSpriteSheet);
 
+    var mapUI  = "./resources/mapui.png";
+    game.preload(mapUI);
+
+    var shipsSpriteSheet  = "./resources/ships.png";
+    game.preload(shipsSpriteSheet);
+
     /**
      * Map のマスの定義
      */
@@ -142,6 +148,14 @@ window.onload = function(){
         tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
             self.ontouchend(params);
         });
+
+        tiles.addEventListener(enchant.Event.TOUCH_START, function(params){
+            self.ontouchupdate(params);
+        });
+
+        tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
+            self.ontouchupdate(params);
+        });
       },
       toLocalSpace:function(worldX,worldY) {
         /**
@@ -195,9 +209,9 @@ window.onload = function(){
         this.playLayer.addChild(object);
         //playLayerと言うグループも本にはないので自分で探す必要がある。
       },
-      positionObject: function(object, i, j){
+      positonObject: function(object, i, j){
         /**
-        *オブジェクトのi,jの位置を記憶するためのmap.positionObject
+        *オブジェクトのi,jの位置を記憶するためのmap.positonObject
         *を少し変更する。
         */
         var position = this.getMapPositionAtTile(i,j);
@@ -212,10 +226,18 @@ window.onload = function(){
         object.j = j;//jを保存
       },
       positionFune: function(fune, i, j) {
-        this.positionObject(fune, i, j);
+        this.positonObject(fune, i, j);
       },
       setActiveFune: function(fune) {
         this.activeFune = fune;
+      },
+      outOfBorders: function(i, j) {
+          if (i < 0) return true;
+          if (i >= this.mapWidth) return true;
+          if (j < 0) return true;
+          if (j >= this.mapHeight) return true;
+
+          return false;
       },
       getManhattanDistance: function(startI, startJ, endI, endJ) {
         var distance = Math.abs(startI - endI) +Math.abs(startJ -endJ);
@@ -233,7 +255,6 @@ window.onload = function(){
         *ここは本に書かれた内容まったく一致しなかったので自分でソース把握の後修正
         */
         var localPosition = this.toLocalSpace(params.x, params.y);
-
         var tileData = this.tiles.checkTile(localPosition.x, localPosition.y);
         /**
         *checkTile: function(x, y) {
@@ -259,7 +280,6 @@ window.onload = function(){
 
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
           //動かせないマスであればメッセージを表示
-          alert("通れない、"+tileInfo.name);
           console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         } else {
           //動かせる時はクリックした位置からタイルの情報を習得
@@ -267,6 +287,11 @@ window.onload = function(){
           /**
           *船を指定位置まで移動させる
           */
+          if (this.outOfBorders(tile.i, tile.j)) {
+            return;
+          }
+          console.log("i",tile.i,"j",tile.j,"distance",this.getManhattanDistance(this.activeFune.i, tile.i , tile.j));
+
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement())
           {
             this.positionFune(this.activeFune, tile.i, tile.j);
@@ -274,6 +299,48 @@ window.onload = function(){
           console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         }
       },
+      ontouchupdate: function(params) {
+        //ローカルポジションを取得
+        var localPosition = this.toLocalSpace(params.x, params.y);
+        var tile = this. getMapTileAtPosition(localPosition.x, localPosition.y);
+        if (this.outOfBorders(tile.i, tile.j)) {
+        /**
+        * マップ以外のマスのない場所は何もしないのでreturnで中断
+        */
+          return
+        }
+        if (this.mapMarker = undefined) {
+          /**
+          *Xマークのオブジェクトがない場合, Xのスプライトオブジェクトを作る
+          */
+          this.mapMarker = new Sprite(64,64);
+          this.mapMarker.image = game.assets[mapUI];
+          this.positonObject(this.mapMarker, tile.i, tile.j);
+          this.overLayer.addChild(this.mapMarker);
+        } else {
+          /**
+          *Xマークのオブジェクトがあるときは、　それを移動する。
+          */
+          this.positonObject(this.mapMarker, tile.i, tile.j);
+        }
+
+        if (this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
+          /**
+          *岩や陸の上には動けないので距離に関係なく灰色マークにする。
+          */
+          this.mapMarker.frame = 1;
+        } else {
+          if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j,
+             tile.i, tile.j) <= this.activeFune.getMovement()) {
+               //距離範囲内はマークを赤く
+               this.mapMarker.frame = 0;
+             } else {
+               //範囲距離外はマークを灰色にする
+               this.mapMarker.frame = 1;
+             }
+        }
+      }
+
     });
 
     game.onload = function(){
