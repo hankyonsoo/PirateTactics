@@ -150,11 +150,11 @@ window.onload = function(){
         });
 
         tiles.addEventListener(enchant.Event.TOUCH_START, function(params){
-            self.ontouchupdate(params);
+            self.ontouchupdate(params)
         });
 
         tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
-            self.ontouchupdate(params);
+            self.ontouchupdate(params)
         });
       },
       toLocalSpace:function(worldX,worldY) {
@@ -300,6 +300,11 @@ window.onload = function(){
         }
       },
       ontouchupdate: function(params) {
+        if (this.mapMarker) {
+            this.overLayer.removeChild(this.mapMarker)
+            delete this.mapMarker;
+        }
+
         //ローカルポジションを取得
         var localPosition = this.toLocalSpace(params.x, params.y);
         var tile = this. getMapTileAtPosition(localPosition.x, localPosition.y);
