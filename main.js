@@ -138,6 +138,16 @@ window.onload = function(){
         scene.addChild(playLayer);
         this.playLayer = playLayer;
 
+        /**
+        * overLayerは本に書かれてないので余注意
+        * 本当くそみたいな説明しか書かれてない本だ。
+        */
+        // overLayer
+        var overLayer = new Group()
+        scene.addChild(overLayer);
+        this.overLayer = overLayer;
+
+
         var self = this;
         tiles.touchEnabled = true;//タッチを可能にする。
         /**touchEnableではなく
@@ -153,7 +163,7 @@ window.onload = function(){
             self.ontouchupdate(params)
         });
 
-        tiles.addEventListener(enchant.Event.TOUCH_END, function(params){
+        tiles.addEventListener(enchant.Event.TOUCH_MOVE, function(params){
             self.ontouchupdate(params)
         });
       },
@@ -177,6 +187,7 @@ window.onload = function(){
         /**
         * ローカル座標からtilesの座標をプラス
         */
+        console.log("x :"+ worldX+", y :"+ worldY);
         return {x:worldX, y:worldY}
       },
       getMapTileAtPosition:function(localX, localY) {
@@ -245,6 +256,10 @@ window.onload = function(){
         return distance;
       },
       ontouchend:function(params) {
+        if (this.mapMarker) {
+            this.overLayer.removeChild(this.mapMarker)
+            delete this.mapMarker;
+        }
         //collisionデータを利用して判定する。
         /**
         *if (this.hitTest(params.x, params.y) == true) {
@@ -300,11 +315,6 @@ window.onload = function(){
         }
       },
       ontouchupdate: function(params) {
-        if (this.mapMarker) {
-            this.overLayer.removeChild(this.mapMarker)
-            delete this.mapMarker;
-        }
-
         //ローカルポジションを取得
         var localPosition = this.toLocalSpace(params.x, params.y);
         var tile = this. getMapTileAtPosition(localPosition.x, localPosition.y);
@@ -314,7 +324,7 @@ window.onload = function(){
         */
           return
         }
-        if (this.mapMarker = undefined) {
+        if (this.mapMarker == undefined) {
           /**
           *Xマークのオブジェクトがない場合, Xのスプライトオブジェクトを作る
           */
