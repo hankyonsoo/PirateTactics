@@ -48,6 +48,12 @@ window.onload = function(){
       iwa: {id: 4,name:"iwa"},//岩
     }
 
+    var GameManager = Class.create({
+      initialize: function() {
+        this.playerList = [];
+        this.turnCounter = 0;
+      }
+    })
     /**
     *船クラス
     */
