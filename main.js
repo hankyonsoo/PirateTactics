@@ -50,9 +50,94 @@ window.onload = function(){
 
     var GameManager = Class.create({
       initialize: function() {
+        /**
+        *　ゲーム管理クラスの初期化
+        */
         this.playerList = [];
         this.turnCounter = 0;
-      }
+      },
+
+      addPlayer: function(player){
+        /**
+        *プレイヤーを追加するメソッド
+        */
+        player.setController(this);
+        this.playerList.push(player);
+      },
+
+      setMap: function(map) {
+        /**
+        *マップを追加する。
+        */
+        map.setController(this);
+        this.map = map;
+      },
+
+      setTurnUI: function(ui) {
+        /**
+        *ターンを表示の追加メソッド
+        */
+        this.turnUI = ui;
+      },
+
+      setStartPositions: function(startPositions) {
+        /**
+        * 初期位置の設定メソッド
+        */
+        this.startPositions = startPositions;
+      },
+
+      getActivePlayer: function() {
+        /**
+        *　現在誰のターンかを返すメソッド
+        */
+        return this.playerList[this.turnCounter % this.playerList.length];
+      },
+
+      beginGame: function() {
+        var player = this.getActivePlayer();
+        for(var funeIndex = 0; funeIndex < player.getFuneCount(); funeIndex++) {
+          var fune = player.getFune(funeIndex)
+          /**
+          * 船を初期位置に配置
+          */
+          this.map.addChild(fune);
+          var startPosition = this.startPositions.player1[funeIndex]
+          this.map.positionFune(fune, startPosition.i, startPosition.j);
+        }
+
+        this.startTurn();
+      },
+
+      startTurn: function() {
+        /**
+        *　ターンの初期処理
+        */
+        var player = this.getActivePlayer();
+        player.setActive(true);
+
+        this.updateTurn;
+      },
+
+      updateTurn: function() {
+        /**
+        * ターンの更新処理
+        */
+        this.map.setActiveFune(this.getActivePlayer().getActiveFune());
+        this.map.drawMovementRange();
+        this.turnUI.updateTurn(this.turnCounter);
+      },
+
+      endTurn: function() {//ターン終了
+
+        var player = this.getActivePlayer();
+        player.setActive(false);
+        /**
+        * 現在のプレイヤーを非アクディブにしてターンカウンターを1つ増やし次のターンを開始する。
+        */
+        this.turnCounter++;
+        this. startTurn();
+      },
     })
     /**
     *船クラス
@@ -72,6 +157,43 @@ window.onload = function(){
           //移動を取得するメソッド
           return this.stats.movement;
         }
+    });
+
+  /**
+   * プレイヤー
+  */
+    var GamePlayer = Class.create({
+        initialize: function() {
+            this.funeList = [];
+        },
+        isActive: function() {
+            return this.myTurn;
+        },
+        setActive: function(flag) {
+            this.myTurn = flag;
+        },
+        setController: function(controller) {
+            this.controller = controller;
+        },
+        addFune: function(fune) {
+            this.funeList.push(fune)
+        },
+        getFune: function(index) {
+            return this.funeList[index];
+        },
+        getFuneCount: function() {
+            return this.funeList.length;
+        },
+        getActiveFune: function() {
+            if (this.activeShip) {
+                return this.activeShip;
+            } else {
+                return this.funeList[0];
+            }
+        },
+        setActiveFune: function(fune) {
+            this.activeShip = fune;
+        },
     });
     /**
     * マップクラス
@@ -179,6 +301,11 @@ window.onload = function(){
             self.ontouchupdate(params)
         });
       },
+
+      setController: function(controller) {
+        this.controller = controller;
+      },
+
       toLocalSpace:function(worldX,worldY) {
         /**
         *ワールド座標を与えるとローカル座標(localX, localY)を返す
@@ -428,9 +555,29 @@ window.onload = function(){
 
     });
 
-    game.onload = function(){
+    /**
+    *　ターン関係の情報を表示するクラス
+    */
+    var TurnUI = Class.create(Label, {
+      initialize: function(scene) {
+        //ターンを初期化
+        Label.call(this);
+        scene.addChild(this);
+        this.x = 64;
+        this.y = 640-50;
+        this.font = "32px 'ＭＳ ゴシック', arial, sans-serif";
+        this.color = "rgba(20, 20, 255, 1.0)"
+      },
 
+      updateTurn: function(turn) {
+        this.text = "ターン:"+turn;
+      },
+    })
+    game.onload = function(){
       var sceneGameMain = new Scene();
+
+      //ゲームロジックの管理
+      var manager = new GameManager();
 
       //マス
       var mapDisplayData = [
@@ -447,17 +594,34 @@ window.onload = function(){
 
         //ここでGameMapクラスを使う
         var map = new GameMap(sceneGameMain/*追加するシーン*/,mapDisplayData/*マスのデータを指定*/);
+        manager.setMap(map);
 
-        //船をシーンに追加
+        //ターンのUIを追加
+        var turnUI = new TurnUI(sceneGameMain);
+        manager.setTurnUI(turnUI);
+
+        //プレイヤー１をゲームマネージャーに追加
+        var player1 = new GamePlayer();
+        manager.addPlayer(player1);
+
+        //船をプレイヤーに追加
         var fune = new Fune();
-        map.addChild(fune);
-        //ここでaddChildと言うファンションは本に記述されてないのでサンプルを見て
-        //自分で探す必要がある。
-        map.positionFune(fune, 3, 3);
-        map.setActiveFune(fune);
+        player1.addFune(fune);
 
-        //ゲームにシーンを追加
-        game.pushScene(sceneGameMain);
+        // 船の初期の位置
+        var startPositions = {
+            player1: [
+                {i:3, j:3}
+            ],
+        }
+      //ゲームマネージャーにスタートポイント追加
+      manager.setStartPositions(startPositions);
+
+      //ゲームにシーンを追加
+      game.pushScene(sceneGameMain);
+
+      //ゲームのロジック開始
+      manager.beginGame();
     };
 
     game.start();
