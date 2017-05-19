@@ -116,7 +116,7 @@ window.onload = function(){
         var player = this.getActivePlayer();
         player.setActive(true);
 
-        this.updateTurn;
+        this.updateTurn();
       },
 
       updateTurn: function() {
@@ -208,6 +208,7 @@ window.onload = function(){
         frame.image = game.assets[mapFrame];
         //画面の枠を描画する
         scene.addChild(frame);
+        this.frame = frame;
 
         //背景
         var background = new Sprite(64*13, 64*9);
@@ -268,7 +269,8 @@ window.onload = function(){
         this.underLayer = underLayer;
 
         // playLayer
-        var playLayer = new Group()
+        var playLayer = new Group();
+        playLayer.touchEnabled = false;
         scene.addChild(playLayer);
         this.playLayer = playLayer;
 
@@ -277,7 +279,8 @@ window.onload = function(){
         * 本当くそみたいな説明しか書かれてない本だ。
         */
         // overLayer
-        var overLayer = new Group()
+        var overLayer = new Group();
+        overLayer.touchEnabled = false;;
         scene.addChild(overLayer);
         this.overLayer = overLayer;
 
@@ -379,6 +382,7 @@ window.onload = function(){
         this.positonObject(fune, i, j);
       },
       setActiveFune: function(fune) {
+        fune.map = this;
         this.activeFune = fune;
         this.drawMovementRange()
       },
@@ -493,6 +497,8 @@ window.onload = function(){
           //動かせないマスであればメッセージを表示
           console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         } else {
+          console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
+
           //動かせる時はクリックした位置からタイルの情報を習得
           var tile = this.getMapTileAtPosition(localPosition.x, localPosition.y);
           /**
@@ -503,12 +509,10 @@ window.onload = function(){
           }
           console.log("i",tile.i,"j",tile.j,"distance",this.getManhattanDistance(this.activeFune.i, tile.i , tile.j));
 
-          if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement())
-          {
+          if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement()) {
             this.positionFune(this.activeFune, tile.i, tile.j);
             this.drawMovementRange();
           }
-          console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
         }
       },
       ontouchupdate: function(params) {
@@ -551,7 +555,7 @@ window.onload = function(){
                this.mapMarker.frame = 1;
              }
         }
-      }
+      },
 
     });
 
