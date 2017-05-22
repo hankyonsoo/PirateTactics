@@ -54,6 +54,9 @@ window.onload = function(){
         *　ゲーム管理クラスの初期化
         */
         this.playerList = [];
+      /**
+      *プレイヤーを人数を増やしやすくするため配列に宣言する。
+      */
         this.turnCounter = 0;
       },
 
@@ -95,9 +98,11 @@ window.onload = function(){
       },
 
       beginGame: function() {
-        var player = this.getActivePlayer();
-        for(var funeIndex = 0; funeIndex < player.getFuneCount(); funeIndex++) {
-          var fune = player.getFune(funeIndex)
+        //プレイヤー１をアクティブにする
+        var player1 = this.playerList[0];
+        for(var funeIndex = 0; funeIndex < player1.getFuneCount(); funeIndex++) {
+          //player1の配列の分ループを回す。
+          var fune = player1.getFune(funeIndex)
           /**
           * 船を初期位置に配置
           */
@@ -106,6 +111,17 @@ window.onload = function(){
           this.map.positionFune(fune, startPosition.i, startPosition.j);
         }
 
+        var player2 = this.playerList[1];
+        for(funeIndex = 0; funeIndex <player2.getFuneCount(); funeIndex++) {
+          //player2の配列の分ループを回す
+          var fune = player2.getFune(funeIndex);
+          fune.OriginX = 32;
+          fune.scaleX = -1;
+          this.map.addChild(fune);
+          var startPosition = this.startPositions.player2[funeIndex]
+          this.map.positionFune(fune, startPosition.i, startPosition.j);
+        }
+        
         this.startTurn();
       },
 
@@ -144,7 +160,9 @@ window.onload = function(){
     */
     var Fune = Class.create(Sprite, {
         initialize: function(scene) {
+          //スプライトの読み込む大きさ指定
             Sprite.call(this, 64, 64);
+            //イメージはshipsSpriteSheetに指定
             this.image = game.assets[shipsSpriteSheet];
             this.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
 
@@ -153,9 +171,19 @@ window.onload = function(){
               movement: 3,
             };
         },
-        getMovement() {
+        getMovement: function() {
           //移動を取得するメソッド
           return this.stats.movement;
+        },
+
+        ontouchend: function(params) {
+          if(this.player.getActiveFune() == this) {
+            //現在動かしている船を選択した場合
+            alert("現在選択中の船です");
+          } else {
+            //それ以外の船を選択した場合動かす船を変える
+            this.player.setActiveFune(this);
+          }
         }
     });
 
@@ -164,6 +192,7 @@ window.onload = function(){
   */
     var GamePlayer = Class.create({
         initialize: function() {
+          //船の配列(船の数設定)を作る
             this.funeList = [];
         },
         isActive: function() {
@@ -176,6 +205,7 @@ window.onload = function(){
             this.controller = controller;
         },
         addFune: function(fune) {
+            fune.player = this;
             this.funeList.push(fune)
         },
         getFune: function(index) {
@@ -192,7 +222,10 @@ window.onload = function(){
             }
         },
         setActiveFune: function(fune) {
+            //現在動かす船の設定
             this.activeShip = fune;
+            //コントローラーアップデート
+            this.controller.updateTurn();
         },
     });
     /**
@@ -511,7 +544,7 @@ window.onload = function(){
 
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement()) {
             this.positionFune(this.activeFune, tile.i, tile.j);
-            this.drawMovementRange();
+            this.controller.endTurn();
           }
         }
       },
@@ -608,14 +641,30 @@ window.onload = function(){
         var player1 = new GamePlayer();
         manager.addPlayer(player1);
 
-        //船をプレイヤーに追加
-        var fune = new Fune();
-        player1.addFune(fune);
+        //プレイヤー２をゲームマネージャーに追加する
+        var player2 = new GamePlayer();
+        manager.addPlayer(player2);
 
+        //船をプレイヤーに追加
+        for(var i=0; i<4; ++i) {
+          //プレイヤー1を4人追加する。
+          var fune = new Fune();
+          player1.addFune(fune);
+        }
+
+        for(var i=0; i<4; ++i) {
+          //プレイヤー２を４人追加
+          var fune = new Fune();
+          player2.addFune(fune);
+        }
         // 船の初期の位置
         var startPositions = {
+          //プレイヤー１のスタートポイント指定
             player1: [
-                {i:3, j:3}
+                {i: 0, j: 8}, {i: 0, j: 6}, {i: 1, j: 7}, {i: 2, j: 8}
+            ],
+            player2: [
+              　{i: 12, j: 0}, {i: 10, j: 0}, {i: 11, j: 1}, {i: 12, j: 2}
             ],
         }
       //ゲームマネージャーにスタートポイント追加
