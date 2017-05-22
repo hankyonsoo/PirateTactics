@@ -37,6 +37,25 @@ window.onload = function(){
     var shipsSpriteSheet  = "./resources/ships.png";
     game.preload(shipsSpriteSheet);
 
+    var pirateSprites = [
+      "./resources/pirate00.png",
+    ];
+
+    for (var i=0;　i < pirateSprites.length; ++i) {
+      game.preload(pirateSprites[i]);
+    }
+
+    var ui1x1Black = "./resources/1x1black.png";
+    game.preload(ui1x1Black);
+
+    var uiWindowSprite = "./resources/window.png";
+    game.preload(uiWindowSprite);
+
+    var uiCancelBtnSprite = "./resources/btnCancel.png";
+    game.preload(uiCancelBtnSprite);
+
+    var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
+
     /**
      * Map のマスの定義
      */
@@ -121,7 +140,7 @@ window.onload = function(){
           var startPosition = this.startPositions.player2[funeIndex]
           this.map.positionFune(fune, startPosition.i, startPosition.j);
         }
-        
+
         this.startTurn();
       },
 
@@ -147,6 +166,7 @@ window.onload = function(){
       endTurn: function() {//ターン終了
 
         var player = this.getActivePlayer();
+        //ターンが終わったら今操縦する船の活性化を止める。
         player.setActive(false);
         /**
         * 現在のプレイヤーを非アクディブにしてターンカウンターを1つ増やし次のターンを開始する。
@@ -159,7 +179,7 @@ window.onload = function(){
     *船クラス
     */
     var Fune = Class.create(Sprite, {
-        initialize: function(scene) {
+        initialize: function(id, stats) {
           //スプライトの読み込む大きさ指定
             Sprite.call(this, 64, 64);
             //イメージはshipsSpriteSheetに指定
@@ -169,23 +189,61 @@ window.onload = function(){
             this.stats = {
               //移動力を表すプロパティを追加
               movement: 3,
+              //それ以外のパラメータを追加
+              range: 3,
+              attack: 100,
+              defense: 50,
+              hpMax: 100,
             };
+            this.stats.hp = this.stats.hpMax;
         },
+
+        /**
+        * 各パラメータを追加するメソッド追加
+        */
         getMovement: function() {
           //移動を取得するメソッド
           return this.stats.movement;
         },
 
+        getRange: function() {
+          return this.stats.range;
+        },
+
+        getAttack: function() {
+          return this.stats.attack;
+        },
+
+        getDefense: function() {
+          return this.stats.defense;
+        },
+
+        getHPMax: function() {
+          return this.stats.hpMax;
+        },
+
+        getHP: function() {
+          return this.stats.hp;
+        },
+
+        getCaptainName: function() {
+          return "キャプティン";
+        },
+
         ontouchend: function(params) {
           if(this.player.getActiveFune() == this) {
             //現在動かしている船を選択した場合
-            alert("現在選択中の船です");
+            var　popup = new StatusWindow(this);
+            popup.onCancel = function() {
+              //ウィンドウを閉じる
+            }
           } else {
             //それ以外の船を選択した場合動かす船を変える
             this.player.setActiveFune(this);
           }
         }
     });
+
 
   /**
    * プレイヤー
@@ -610,6 +668,103 @@ window.onload = function(){
         this.text = "ターン:"+turn;
       },
     })
+
+    /**
+    * キャラクターのポップアップを表示
+    */
+    var StatusWindow = Class.create(Scene, {
+      initialize:function(fune) {
+        Scene.call(this);
+        game.pushScene(this);
+
+        var shieldSprite = new Sprite(960, 640);
+        shieldSprite.image = game.assets[ui1x1Black];
+        shieldSprite.opacity = 0.5;
+        this.addChild(shieldSprite);
+
+        var windowGroup = new Group();
+        windowGroup.x = (960 -512)/2;
+        windowGroup.y = (640 -512)/2;
+        this.addChild(windowGroup);
+
+        var windowSprite = new Sprite(512, 512);
+        windowSprite.image = game.assets[uiWindowSprite];
+        windowGroup.addChild(windowSprite);
+
+        var statsGroup = new Group();
+        statsGroup.x = 64;
+        statsGroup.y = 32;
+        windowGroup.addChild(statsGroup);
+
+        var fontColor = "rgba(255, 255, 105, 1.0)";
+
+        captainLabel = new Label("船長:"+fune.getCaptainName());
+        statsGroup.addChild(captainLabel);
+        captainLabel.x = 0;
+        captainLabel.y = 0;
+        captainLabel.font = fontStyle;
+        captainLabel.color = fontColor;
+
+        attackLabel = new Label("攻撃力:"+fune.getAttack());
+        statsGroup.addChild(attackLabel);
+        attackLabel.x = 0;
+        attackLabel.y = 64*1;
+        attackLabel.font = fontStyle;
+        attackLabel.color = fontColor;
+
+        defenseLabel = new Label("防御力:"+fune.getDefense());
+        statsGroup.addChild(defenseLabel);
+        defenseLabel.x = 0;
+        defenseLabel.y = 64*2;
+        defenseLabel.font = fontStyle;
+        defenseLabel.color =fontColor;
+
+        movementLabel = new Label("移動力:"+fune.getMovement());
+        statsGroup.addChild(movementLabel);
+        movementLabel.x = 0;
+        movementLabel.y = 64*3;
+        movementLabel.font = fontStyle;
+        movementLabel.color = fontColor;
+
+        rangeLabel = new Label("攻撃の距離:"+fune.getRange());
+        statsGroup.addChild(rangeLabel);
+        rangeLabel.x = 0;
+        rangeLabel.y = 64*4;
+        rangeLabel.font = fontStyle;
+        rangeLabel.color = fontColor;
+
+        hpLabel = new Label("HP:"+fune.getHP()+"/"+fune.getHPMax());
+        statsGroup.addChild(hpLabel);
+        hpLabel.x = 0;
+        hpLabel.y = 64*5;
+        hpLabel.font = fontStyle;
+        hpLabel.color = fontColor;
+
+        var pirate = new Sprite(400,600);
+        pirate.x = 350;
+        pirate.y = -50;
+        pirate.opacity = 0;
+        pirate.image = game.assets[pirateSprites[0]];
+        windowGroup.addChild(pirate);
+
+        var self = this;
+        var cancelBtnSprite = new Sprite(128,64);
+        cancelBtnSprite.image = game.assets[uiCancelBtnSprite];
+        cancelBtnSprite.x = 64;
+        cancelBtnSprite.y = 512 -96;
+
+        windowGroup.addChild(cancelBtnSprite);
+
+        cancelBtnSprite.addEventListener(enchant.Event.TOUCH_END,
+          function(params){
+            game.popScene();
+            if(self.onCancel) {
+              self.onCancel();
+            }
+        });
+      },
+    })
+
     game.onload = function(){
       var sceneGameMain = new Scene();
 
