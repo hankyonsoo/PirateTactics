@@ -34,15 +34,25 @@ window.onload = function(){
     var mapUI  = "./resources/mapui.png";
     game.preload(mapUI);
 
-    var shipsSpriteSheet  = "./resources/ships.png";
-    game.preload(shipsSpriteSheet);
-
     var pirateSprites = [
       "./resources/pirate00.png",
+      "./resources/pirate01.png",
+      "./resources/pirate02.png",
+      "./resources/pirate03.png",
     ];
 
     for (var i=0;　i < pirateSprites.length; ++i) {
       game.preload(pirateSprites[i]);
+    }
+
+    var pirateChibiSprites = [
+      "./resources/pirateChibi00.png",
+      "./resources/pirateChibi01.png",
+      "./resources/pirateChibi02.png",
+      "./resources/pirateChibi03.png",
+    ];
+    for (var i=0; i<pirateChibiSprites.length; ++i) {
+      game.preload(pirateChibiSprites[i]);
     }
 
     var ui1x1Black = "./resources/1x1black.png";
@@ -121,7 +131,7 @@ window.onload = function(){
         var player1 = this.playerList[0];
         for(var funeIndex = 0; funeIndex < player1.getFuneCount(); funeIndex++) {
           //player1の配列の分ループを回す。
-          var fune = player1.getFune(funeIndex)
+          var fune = player1.getFune(funeIndex);
           /**
           * 船を初期位置に配置
           */
@@ -178,22 +188,29 @@ window.onload = function(){
     /**
     *船クラス
     */
-    var Fune = Class.create(Sprite, {
+    var BaseFune = Class.create(Group, {
         initialize: function(id, stats) {
           //スプライトの読み込む大きさ指定
-            Sprite.call(this, 64, 64);
+            Group.call(this);
             //イメージはshipsSpriteSheetに指定
-            this.image = game.assets[shipsSpriteSheet];
-            this.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
+            var fune = new Sprite(64,64);
+            //マップ上の船を各表示のため船変数を別々に作る
+            this.fune = fune;
+            //イメージ読み込み
+            fune.image = game.assets[shipsSpriteSheet];
+            //表示されるコマを表示
+            fune.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
+            fune.sinkFrame = [ 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,null];
+            this.addChild(fune);
 
             this.stats = {
               //移動力を表すプロパティを追加
-              movement: 3,
-              //それ以外のパラメータを追加
-              range: 3,
-              attack: 100,
-              defense: 50,
-              hpMax: 100,
+              id:        id,
+              movement:  stats.movement,
+              range:     stats.range,
+              attack:    stats.attack,
+              defense:   stats.defense,
+              hpMax:     stats.hpMax,
             };
             this.stats.hp = this.stats.hpMax;
         },
@@ -201,6 +218,9 @@ window.onload = function(){
         /**
         * 各パラメータを追加するメソッド追加
         */
+        getId : function() {
+          return this.stats.id;
+        },
         getMovement: function() {
           //移動を取得するメソッド
           return this.stats.movement;
@@ -227,7 +247,15 @@ window.onload = function(){
         },
 
         getCaptainName: function() {
-          return "キャプティン";
+          return "無名";
+        },
+
+        getImage: function() {
+          return game.assets[pirateSprites[this.getId() -1]]
+        },
+
+        getChibiImage: function() {
+          return game.assets[pirateChibiSprites[this.getId() -1]]
         },
 
         ontouchend: function(params) {
@@ -244,7 +272,108 @@ window.onload = function(){
         }
     });
 
+/**
+* 船の種類
+*/
+    var CaptainFune = Class.create(BaseFune, {
+      /**
+      *イメージとステータスをオーバーライト
+      */
+      initialize: function(id) {
+        BaseFune.call(this, id, {
+          movement:  4,
+          range:     3,
+          attack:  100,
+          defense:  50,
+          hpMax:   120,
+        });
 
+        //通常アニメーション
+        this.fune.frame = [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0, 3, 3, 3];
+        //沈むアニメーション
+        this.fune.sinkFrame = [3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, null];
+      },
+
+      //名前をオーバーライト
+      getCaptainName: function() {
+        return "キャプテン";
+      }
+    });
+
+    var HayaiFune = Class.create(BaseFune, {
+      /**
+      *イメージとステータスをオーバーライト
+      */
+      initialize: function(id) {
+        BaseFune.call(this, id, {
+          movement:  5,
+          range:     3,
+          attack:  80,
+          defense:  60,
+          hpMax:   80,
+        });
+
+        //通常アニメーション
+        this.fune.frame = [8, 8, 8, 8, 9, 9, 9, 10, 10, 9, 9, 8, 8, 8, 8, 11, 11, 11];
+        //沈むアニメーション
+        this.fune.sinkFrame = [11, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, null];
+      },
+
+      //名前をオーバーライト
+      getCaptainName: function() {
+        return "早いちゃん";
+      }
+    });
+
+    var KataiFune = Class.create(BaseFune, {
+      /**
+      *イメージとステータスをオーバーライト
+      */
+      initialize: function(id) {
+        BaseFune.call(this, id, {
+          movement:  3,
+          range:     3,
+          attack:  80,
+          defense:  60,
+          hpMax:   240,
+        });
+
+        //通常アニメーション
+        this.fune.frame = [16, 16, 16, 16, 17, 17, 17, 18, 18, 17, 17, 16, 16, 16, 16, 19, 19, 19];
+        //沈むアニメーション
+        this.fune.sinkFrame = [19, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23, null];
+      },
+
+      //名前をオーバーライト
+      getCaptainName: function() {
+        return "硬いちゃん";
+      }
+    });
+
+    var KougekiFune = Class.create(BaseFune, {
+      /**
+      *イメージとステータスをオーバーライト
+      */
+      initialize: function(id) {
+        BaseFune.call(this, id, {
+          movement:  3,
+          range:     3,
+          attack:  120,
+          defense:  40,
+          hpMax:   150,
+        });
+
+        //通常アニメーション
+        this.fune.frame = [24, 24, 24, 24, 25, 25, 25, 26, 26, 25, 25, 24, 24, 24, 24, 27, 27, 27];
+        //沈むアニメーション
+        this.fune.sinkFrame = [27, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31, null];
+      },
+
+      //名前をオーバーライト
+      getCaptainName: function() {
+        return "攻撃ちゃん";
+      }
+    });
   /**
    * プレイヤー
   */
@@ -744,7 +873,7 @@ window.onload = function(){
         pirate.x = 350;
         pirate.y = -50;
         pirate.opacity = 0;
-        pirate.image = game.assets[pirateSprites[0]];
+        pirate.image = fune.getImage();
         windowGroup.addChild(pirate);
 
         var self = this;
@@ -801,17 +930,15 @@ window.onload = function(){
         manager.addPlayer(player2);
 
         //船をプレイヤーに追加
-        for(var i=0; i<4; ++i) {
-          //プレイヤー1を4人追加する。
-          var fune = new Fune();
-          player1.addFune(fune);
-        }
+        player1.addFune(new CaptainFune(1));
+        player1.addFune(new HayaiFune(2));
+        player1.addFune(new KataiFune(3));
+        player1.addFune(new KougekiFune(4));
 
-        for(var i=0; i<4; ++i) {
-          //プレイヤー２を４人追加
-          var fune = new Fune();
-          player2.addFune(fune);
-        }
+        player2.addFune(new CaptainFune(1));
+        player2.addFune(new HayaiFune(2));
+        player2.addFune(new KataiFune(3));
+        player2.addFune(new KougekiFune(4));
         // 船の初期の位置
         var startPositions = {
           //プレイヤー１のスタートポイント指定
