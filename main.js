@@ -76,6 +76,7 @@ window.onload = function(){
       riku: {id: 3, name:"riku"},//陸
       iwa: {id: 4,name:"iwa"},//岩
     }
+    var tileKankyou = ["海","荒い海","浅い海","陸","岩"];
 
     var GameManager = Class.create({
       initialize: function() {
@@ -171,10 +172,10 @@ window.onload = function(){
         this.map.setActiveFune(this.getActivePlayer().getActiveFune());
         this.map.drawMovementRange();
         this.turnUI.updateTurn(this.turnCounter);
+        this.turnUI.updatePlayer(this.getActivePlayer().getData("name"));
       },
 
       endTurn: function() {//ターン終了
-
         var player = this.getActivePlayer();
         //ターンが終わったら今操縦する船の活性化を止める。
         player.setActive(false);
@@ -258,20 +259,110 @@ window.onload = function(){
           return game.assets[pirateChibiSprites[this.getId() -1]]
         },
 
-        ontouchend: function(params) {
-          if(this.player.getActiveFune() == this) {
-            //現在動かしている船を選択した場合
-            var　popup = new StatusWindow(this);
-            popup.onCancel = function() {
+      attackFune: function(otherFune) {
+        var damage;
+        var baseDamage = this.getAttack();
+        var variance = Math.random() - 0.5;
+        var variableDamage = (baseDamage /10) * variance;
+
+        var attackRoll = Math.random();
+
+        //クリティカルヒット　10%
+        //ミス　10%
+        if (attackRoll > 0.9) {
+          //attackRollが0.9より多きい時はクリティカルにする。
+          damage = (baseDamage +variableDamage)*2
+          alert("クリティカルヒット！！！")
+        } else if(attackRoll < 0.1 ) {
+          //それ以外0.1より小さいときはミスと判定
+          damage = 0;
+        } else {
+          damage = baseDamage +variableDamage;
+        }
+
+        damage = Math.ceil(damage)
+        if (damage > 0) {
+          var beforeHp = otherFune.getHP();
+          var afterHp = otherFune.takeDamage(damage);
+          alert(this.player.getData("name")+"は敵船 "+otherFune.getCaptainName()+"に "+damage+"のダメージを与えて、Hpが　"+beforeHp+"HPから　"+afterHp+"HPになった。")
+
+            if (afterHp <= 0) {
+              alert("沈没した!");
+              otherFune.sinkShip();
+          }
+        } else {
+          alert("ミス");
+        }
+        this.player.controller.endTurn();
+      },
+
+      takeDamage: function(damage, onEnd) {
+        //ダメージ値から防御力を引く。1未満の時は1とする。
+        var actualDamage = Math.max(damage -this.getDefense(),1);
+        this.stats.hp -= actualDamage;
+        //体力からダメージを引く
+        return this.stats.hp;
+      },
+
+      withinRange: function(i, j) {
+        var distance = utils.getManhattanDistance(this.i,this.j,i,j);
+        console.log("withinRange","distance",distance,"range",
+        this.stats.range,distance <= this.stats.range);
+        if( distance <= this.stats.range) {
+          return true;
+        } else {
+          return false;
+        }
+      },
+
+      ontouchend: function(params) {
+          if(this.player.isActive()) {
+            if(this.player.getActiveFune() == this) {
+              //現在動かしている船を選択した場合
+              var　popup = new StatusWindow(this);
+              popup.onCancel = function() {
               //ウィンドウを閉じる
+              }
+            } else {
+              //それ以外の船を選択した場合動かす船を変える
+              this.player.setActiveFune(this);
             }
+        } else {
+          var activePlayer = this.player.controller.getActivePlayer();
+          var activeFune = activePlayer.getActiveFune();
+          if (activeFune.withinRange(this.i, this.j)) {
+            activeFune.attackFune(this);
           } else {
-            //それ以外の船を選択した場合動かす船を変える
-            this.player.setActiveFune(this);
+            alert("攻撃は届けません")
           }
         }
-    });
+      },
+      sinkShip: function() {
+        this.player.removeFune(this);
+        this.parentNode.removeChild(this);
+      }
+  });
 
+/**
+* Utils
+*/
+  var utils = {
+    getEuclideanDistance: function(startI, startJ, endI, endJ) {
+        var distanceSq = Math.pow(startI - endI,2) +Math.pow(startJ -endJ,2);
+        var distance = Math.sqrt(distanceSq);
+        return distance;
+    },
+
+    getManhattanDistance: function(startI, startJ, endI, endJ) {
+        var distance = Math.abs(startI -endI) +Math.abs(startJ -endJ);
+        return distance;
+    },
+
+    getChebyshevDistance: function(startI, startJ, endI, endJ) {
+        var distance = Math.max(Math.abs(startI -endI), Math.abs(startJ -endJ));
+        return distance;
+    },
+  }
 /**
 * 船の種類
 */
@@ -378,9 +469,10 @@ window.onload = function(){
    * プレイヤー
   */
     var GamePlayer = Class.create({
-        initialize: function() {
+        initialize: function(data) {
           //船の配列(船の数設定)を作る
             this.funeList = [];
+            this.data = data;
         },
         isActive: function() {
             return this.myTurn;
@@ -395,6 +487,21 @@ window.onload = function(){
             fune.player = this;
             this.funeList.push(fune)
         },
+        removeFune: function(fune) {
+          delete fune.player;
+
+          var newList = [];
+          for (var i=0; i< this.getFuneCount();++i) {
+            if (this.getFune(i) != fune) {
+              newList.push(this.getFune(i));
+            }
+          }
+          this.funeList = newList;
+
+          if(this.activeFune == fune) {
+            this.activeFune = null;
+          }
+        },
         getFune: function(index) {
             return this.funeList[index];
         },
@@ -408,6 +515,18 @@ window.onload = function(){
                 return this.funeList[0];
             }
         },
+        getData: function(key) {
+            return this.data[key];
+        },
+
+        setData: function(key, value) {
+          this.data[key] = value;
+        },
+
+        setController: function(controller) {
+          this.controller = controller;
+        },
+
         setActiveFune: function(fune) {
             //現在動かす船の設定
             this.activeShip = fune;
@@ -716,6 +835,7 @@ window.onload = function(){
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
           //動かせないマスであればメッセージを表示
           console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
+          alert("そこには"+tileKankyou[tileInfo.id]+"なので通れません！！")
         } else {
           console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
 
@@ -732,6 +852,8 @@ window.onload = function(){
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement()) {
             this.positionFune(this.activeFune, tile.i, tile.j);
             this.controller.endTurn();
+          } else {
+              alert("移動化の範囲を超えています。");
           }
         }
       },
@@ -784,17 +906,28 @@ window.onload = function(){
     */
     var TurnUI = Class.create(Label, {
       initialize: function(scene) {
-        //ターンを初期化
-        Label.call(this);
-        scene.addChild(this);
-        this.x = 64;
-        this.y = 640-50;
-        this.font = "32px 'ＭＳ ゴシック', arial, sans-serif";
-        this.color = "rgba(20, 20, 255, 1.0)"
-      },
+        var fontColor = "rgba(20, 20, 255, 1.0)"
 
+        //ターンを初期化
+        this.turnLabel = new Label();
+        scene.addChild(this.turnLabel);
+        this.turnLabel.x = 64*5;
+        this.turnLabel.y = 640-50;
+        this.turnLabel.font = "32px 'ＭＳ ゴシック', arial, sans-serif";
+        this.turnLabel.color = fontColor;
+
+        this.playerLabel = new Label();
+        scene.addChild(this.playerLabel);
+        this.playerLabel.x = 64;
+        this.playerLabel.y = 640-50;
+        this.playerLabel.font = "32px 'ＭＳ ゴシック', arial, sans-serif";
+        this.playerLabel.color = fontColor;
+      },
       updateTurn: function(turn) {
-        this.text = "ターン:"+turn;
+        this.turnLabel.text = "ターン:"+turn;
+      },
+      updatePlayer: function(name) {
+        this.playerLabel.text = name;
       },
     })
 
@@ -922,11 +1055,11 @@ window.onload = function(){
         manager.setTurnUI(turnUI);
 
         //プレイヤー１をゲームマネージャーに追加
-        var player1 = new GamePlayer();
+        var player1 = new GamePlayer({name:"プレイヤー1"});
         manager.addPlayer(player1);
 
         //プレイヤー２をゲームマネージャーに追加する
-        var player2 = new GamePlayer();
+        var player2 = new GamePlayer({name:"プレイヤー２"});
         manager.addPlayer(player2);
 
         //船をプレイヤーに追加
