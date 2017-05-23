@@ -64,6 +64,15 @@ window.onload = function(){
     var uiCancelBtnSprite = "./resources/btnCancel.png";
     game.preload(uiCancelBtnSprite);
 
+    var uiHealthBack = "./resources/healthBack.png";
+    game.preload(uiHealthBack);
+
+    var uiHealthRed = "./resources/healthRed.png";
+    game.preload(uiHealthRed);
+
+    var uiHealthGreen = "./resources/healthGreen.png";
+    game.preload(uiHealthGreen);
+
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
     /**
@@ -204,6 +213,27 @@ window.onload = function(){
             fune.sinkFrame = [ 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7,null];
             this.addChild(fune);
 
+            //HPゲージのバックを追加
+            var healthBackSprite = new Sprite(64,12);
+            this.healthBackSprite = healthBackSprite;
+            healthBackSprite.image = game.assets[uiHealthBack];
+            healthBackSprite.y = 64-6;
+            this.addChild(healthBackSprite);
+
+            var healthRedSprite = new Sprite(64,12);
+            this.healthRedSprite = healthRedSprite;
+            healthRedSprite.originX = 0;
+            healthRedSprite.image = game.assets[uiHealthRed];
+            healthRedSprite.y = 64-6;
+            this.addChild(healthRedSprite);
+
+            var healthGreenSprite = new Sprite(64,12);
+            this.healthGreenSprite = healthGreenSprite;
+            healthGreenSprite.originX = 0;
+            healthGreenSprite.image = game.assets[uiHealthGreen];
+            healthBackSprite.y = 64-6;
+            this.addChild(healthGreenSprite);
+
             this.stats = {
               //移動力を表すプロパティを追加
               id:        id,
@@ -259,25 +289,35 @@ window.onload = function(){
           return game.assets[pirateChibiSprites[this.getId() -1]]
         },
 
-      attackFune: function(otherFune) {
-        var damage;
-        var baseDamage = this.getAttack();
-        var variance = Math.random() - 0.5;
-        var variableDamage = (baseDamage /10) * variance;
+        updateHPBar: function() {
+          var ratio = Math.max(this.stats.hp / this.stats.hpMax, 0);
+          if (ratio>0.5) {
+            this.healthGreenSprite.scaleX = ratio;
+          } else {
+            this.healthGreenSprite.scaleX = 0;
+          }
+          this.healthRedSprite.scaleX = ratio;
+        },
 
-        var attackRoll = Math.random();
+        attackFune: function(otherFune) {
+          var damage;
+          var baseDamage = this.getAttack();
+          var variance = Math.random() - 0.5;
+          var variableDamage = (baseDamage /10) * variance;
 
-        //クリティカルヒット　10%
-        //ミス　10%
-        if (attackRoll > 0.9) {
-          //attackRollが0.9より多きい時はクリティカルにする。
-          damage = (baseDamage +variableDamage)*2
-          alert("クリティカルヒット！！！")
-        } else if(attackRoll < 0.1 ) {
-          //それ以外0.1より小さいときはミスと判定
-          damage = 0;
-        } else {
-          damage = baseDamage +variableDamage;
+          var attackRoll = Math.random();
+
+          //クリティカルヒット　10%
+          //ミス　10%
+          if (attackRoll > 0.9) {
+            //attackRollが0.9より多きい時はクリティカルにする。
+            damage = (baseDamage +variableDamage)*2
+            alert("クリティカルヒット！！！")
+          } else if(attackRoll < 0.1 ) {
+            //それ以外0.1より小さいときはミスと判定
+            damage = 0;
+          } else {
+            damage = baseDamage +variableDamage;
         }
 
         damage = Math.ceil(damage)
@@ -301,9 +341,13 @@ window.onload = function(){
         var actualDamage = Math.max(damage -this.getDefense(),1);
         this.stats.hp -= actualDamage;
         //体力からダメージを引く
+        this.updateHPBar();
         return this.stats.hp;
       },
-
+      healDamage: function(recover) {
+        this.stats.hp = Math.min(this.stats.hp + recover, this.stats.hpMax);
+        this.updateHPBar();
+      },
       withinRange: function(i, j) {
         var distance = utils.getManhattanDistance(this.i,this.j,i,j);
         console.log("withinRange","distance",distance,"range",
