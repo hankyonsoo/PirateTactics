@@ -54,6 +54,8 @@ window.onload = function(){
     for (var i=0; i<pirateChibiSprites.length; ++i) {
       game.preload(pirateChibiSprites[i]);
     }
+    var explosionSpriteSheet = "./resources/explosion.png";
+    game.preload(explosionSpriteSheet);
 
     var ui1x1Black = "./resources/1x1black.png";
     game.preload(ui1x1Black);
@@ -72,6 +74,7 @@ window.onload = function(){
 
     var uiHealthGreen = "./resources/healthGreen.png";
     game.preload(uiHealthGreen);
+
 
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
@@ -154,11 +157,12 @@ window.onload = function(){
         for(funeIndex = 0; funeIndex <player2.getFuneCount(); funeIndex++) {
           //player2の配列の分ループを回す
           var fune = player2.getFune(funeIndex);
-          fune.OriginX = 32;
+          fune.originX = 32;
           fune.scaleX = -1;
           this.map.addChild(fune);
           var startPosition = this.startPositions.player2[funeIndex]
           this.map.positionFune(fune, startPosition.i, startPosition.j);
+
         }
 
         this.startTurn();
@@ -195,6 +199,26 @@ window.onload = function(){
         this. startTurn();
       },
     })
+
+    /**
+    * 爆発エフェクト
+    */
+    var Explosion = Class.create(Sprite, {
+      initialize: function(id, stats) {
+        Sprite.call(this, 32, 32);
+
+          this.image = game.assets[explosionSpriteSheet];
+          this.frame = [0,1,2,3,1,2,3,4,null];
+
+        this.counter = 0;
+      },
+      onenterframe:function() {
+        this.counter++;
+        if (this.counter == 9 ) {
+          this.parentNode.removeChild(this);
+        }
+      },
+    });
     /**
     *船クラス
     */
@@ -231,7 +255,7 @@ window.onload = function(){
             this.healthGreenSprite = healthGreenSprite;
             healthGreenSprite.originX = 0;
             healthGreenSprite.image = game.assets[uiHealthGreen];
-            healthBackSprite.y = 64-6;
+            healthGreenSprite.y = 64-6;
             this.addChild(healthGreenSprite);
 
             this.stats = {
@@ -324,7 +348,12 @@ window.onload = function(){
         if (damage > 0) {
           var beforeHp = otherFune.getHP();
           var afterHp = otherFune.takeDamage(damage);
-          alert(this.player.getData("name")+"は敵船 "+otherFune.getCaptainName()+"に "+damage+"のダメージを与えて、Hpが　"+beforeHp+"HPから　"+afterHp+"HPになった。")
+
+          var explosion = new Explosion();
+          explosion.x = otherFune.x + 32;
+          explosion.y = otherFune.y + 32;
+
+          game.currentScene.addChild(explosion);
 
             if (afterHp <= 0) {
               alert("沈没した!");
@@ -381,6 +410,7 @@ window.onload = function(){
           }
         }
       },
+
       sinkShip: function() {
         this.player.removeFune(this);
         this.parentNode.removeChild(this);
