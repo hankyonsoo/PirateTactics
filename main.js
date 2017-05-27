@@ -75,6 +75,11 @@ window.onload = function(){
     var uiHealthGreen = "./resources/healthGreen.png";
     game.preload(uiHealthGreen);
 
+    var uiPlayerBanner1 = "./resources/playerBanner1.png";
+    game.preload(uiPlayerBanner1);
+
+    var uiPlayerBanner2 = "./resources/playerBanner2.png";
+    game.preload(uiPlayerBanner2);
 
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
@@ -196,7 +201,26 @@ window.onload = function(){
         * 現在のプレイヤーを非アクディブにしてターンカウンターを1つ増やし次のターンを開始する。
         */
         this.turnCounter++;
-        this. startTurn();
+        var playerBanner = new Sprite(512,256);
+        console.log(player.id);
+        if(player.id == 1) {
+            playerBanner.image = game.assets[uiPlayerBanner2];
+        } else if(player.id == 2) {
+            playerBanner.image = game.assets[uiPlayerBanner1];
+        }
+
+         playerBanner.x = 480 - 256;
+         playerBanner.y = 320 - 128;
+         game.currentScene.addChild(playerBanner);
+
+
+
+        setTimeout(function() {
+          utils.endUIShield();
+          game.currentScene.removeChild(playerBanner);
+        },1000);
+
+          this. startTurn();
       },
     })
 
@@ -436,6 +460,22 @@ window.onload = function(){
         var distance = Math.max(Math.abs(startI -endI), Math.abs(startJ -endJ));
         return distance;
     },
+    beginUIShield: function() {
+      /**
+      * UIが出てる途中にはタッチを防ぐため
+      */
+      var shieldSprite = new Sprite(960,640);
+      shieldSprite.image = game.assets[ui1x1Black];
+      shieldSprite.opacity = 0.0;
+      game.currentScene.addChild(shieldSprite);
+      utils.shieldSprite = shieldSprite;
+    },
+    endUIShield: function() {
+      if(utils.shieldSprite) {
+        game.currentScene.removeChild(utils.shieldSprite);
+        utils.shieldSprite = null;
+      }
+    }
   }
 /**
 * 船の種類
@@ -543,9 +583,10 @@ window.onload = function(){
    * プレイヤー
   */
     var GamePlayer = Class.create({
-        initialize: function(data) {
+        initialize: function(id,data) {
           //船の配列(船の数設定)を作る
             this.funeList = [];
+            this.id = id;
             this.data = data;
         },
         isActive: function() {
@@ -742,7 +783,6 @@ window.onload = function(){
         /**
         * ローカル座標からtilesの座標をプラス
         */
-        console.log("x :"+ worldX+", y :"+ worldY);
         return {x:worldX, y:worldY}
       },
       getMapTileAtPosition:function(localX, localY) {
@@ -908,11 +948,8 @@ window.onload = function(){
 
         if(this.tiles.hitTest(localPosition.x, localPosition.y) == true) {
           //動かせないマスであればメッセージを表示
-          console.log("通れない", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
           alert("そこには"+tileKankyou[tileInfo.id]+"なので通れません！！")
         } else {
-          console.log("通れる", tileInfo.name, "world X", params.x, "localX", localPosition.x, "worldY", params.y, "localY", localPosition.y)
-
           //動かせる時はクリックした位置からタイルの情報を習得
           var tile = this.getMapTileAtPosition(localPosition.x, localPosition.y);
           /**
@@ -921,8 +958,6 @@ window.onload = function(){
           if (this.outOfBorders(tile.i, tile.j)) {
             return;
           }
-          console.log("i",tile.i,"j",tile.j,"distance",this.getManhattanDistance(this.activeFune.i, tile.i , tile.j));
-
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement()) {
             this.positionFune(this.activeFune, tile.i, tile.j);
             this.controller.endTurn();
@@ -1129,11 +1164,11 @@ window.onload = function(){
         manager.setTurnUI(turnUI);
 
         //プレイヤー１をゲームマネージャーに追加
-        var player1 = new GamePlayer({name:"プレイヤー1"});
+        var player1 = new GamePlayer(1, {name:"プレイヤー1"});
         manager.addPlayer(player1);
 
         //プレイヤー２をゲームマネージャーに追加する
-        var player2 = new GamePlayer({name:"プレイヤー２"});
+        var player2 = new GamePlayer(2, {name:"プレイヤー２"});
         manager.addPlayer(player2);
 
         //船をプレイヤーに追加
