@@ -437,7 +437,14 @@ window.onload = function(){
 
       sinkShip: function() {
         this.player.removeFune(this);
-        this.parentNode.removeChild(this);
+        this.fune.frame = this.fune.sinkFrame;
+        this.counter=1;
+        this.onenterframe = function(){
+          this.counter++;
+          if(this.counter == 12) {
+            this.parentNode.removeChild(this);  
+          }
+        }
       }
   });
 
