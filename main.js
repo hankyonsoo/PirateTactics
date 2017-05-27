@@ -31,7 +31,7 @@ window.onload = function(){
     var shipsSpriteSheet  = "./resources/ships.png";
     game.preload(shipsSpriteSheet);
 
-    var mapUI  = "./resources/mapui.png";
+    var mapUI  = "./resources/mapuiformygame.png";
     game.preload(mapUI);
 
     var pirateSprites = [
@@ -95,6 +95,9 @@ window.onload = function(){
     }
     var tileKankyou = ["海","荒い海","浅い海","陸","岩"];
 
+    /**
+    * 全体的にゲームをマネージメントをするクラス
+    */
     var GameManager = Class.create({
       initialize: function() {
         /**
@@ -442,7 +445,7 @@ window.onload = function(){
         this.onenterframe = function(){
           this.counter++;
           if(this.counter == 12) {
-            this.parentNode.removeChild(this);  
+            this.parentNode.removeChild(this);
           }
         }
       }
@@ -487,7 +490,7 @@ window.onload = function(){
 /**
 * 船の種類
 */
-    var CaptainFune = Class.create(BaseFune, {
+  var CaptainFune = Class.create(BaseFune, {
       /**
       *イメージとステータスをオーバーライト
       */
@@ -512,7 +515,7 @@ window.onload = function(){
       }
     });
 
-    var HayaiFune = Class.create(BaseFune, {
+  var HayaiFune = Class.create(BaseFune, {
       /**
       *イメージとステータスをオーバーライト
       */
