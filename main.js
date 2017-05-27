@@ -862,6 +862,16 @@ window.onload = function(){
         //Math.absは絶対値を返しますIの距離とJの絶対値を足します。
         return distance;
       },
+      withinRange: function(i, j) {
+        var distance = utils.getManhattanDistance(this.activeFune.i,this.activeFune.j,i,j);
+        console.log("this.activeFune.i",this.activeFune.i,"this.activeFune.j",this.activeFune.j,
+        this.activeFune.stats.range,distance,distance <= this.activeFune.stats.range);
+        if( distance <= this.activeFune.stats.range) {
+          return true;
+        } else {
+          return false;
+        }
+      },
       drawMovementRange: function(){
         console.log("update drawMovementRange")
 
@@ -878,8 +888,11 @@ window.onload = function(){
         *現在位置を中心にした四角形を左下から右上の順に調べる
         */
         for (var rangeI = -this.activeFune.getMovement(); rangeI <= this.activeFune.getMovement(); rangeI++) {
+          //getMovement : 船の移動可能距離
+          //targetI = 今操作中の船の横位置+range表示
           var targetI = this.activeFune.i +rangeI;
           for (var rangeJ = -this.activeFune.getMovement(); rangeJ <= this.activeFune.getMovement(); rangeJ++) {
+            //targetJ = 今操作中の船の縦位置+range表示
             var targetJ = this.activeFune.j + rangeJ;
 
             if (!this.outOfBorders(targetI, targetJ)) {
@@ -908,8 +921,12 @@ window.onload = function(){
                   areaSprite.frame = 3;
                   //赤く表示
                 } else {
-                  areaSprite.frame = 2;
-                  //そうでなければ白く表示
+                  if(this.withinRange(targetI,targetJ)) {
+                    areaSprite.frame = 4;
+                  } else {
+                    //そうでなければ白く表示
+                    areaSprite.frame = 2;
+                  }
                 }
                 this.positonObject(areaSprite, targetI, targetJ);
                 this.areaRangeLayer.addChild(areaSprite);
