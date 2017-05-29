@@ -216,20 +216,37 @@ window.onload = function(){
 
         var winner = this.getWinner();
         if (winner) {
-          var playerBanner = new Sprite(512, 256);
-          if (player.id == 1) {
-            playerBanner.image = game.assets[uiWin];
-          } else if (player.id == 2) {
-            playerBanner.image = game.assets[uiLose];
-          }
+            var playerBanner = new Sprite(512, 256);
+            if (player.id == 1) {
+              playerBanner.image = game.assets[uiWin];
+            } else if (player.id == 2) {
+              playerBanner.image = game.assets[uiLose];
+            }
 
-          playerBanner.x = 480 -256;
-          playerBanner.y = 320 -128;
-          game.currentScene.addChild(playerBanner);
+            playerBanner.opacity = 0;
+            playerBanner.x = 480 -256;
+            playerBanner.y = 320 -128;
+            game.currentScene.addChild(playerBanner);
 
-          setTimeout(function() {
-            location.reload();
-          }, 3000);
+            var self = this;
+            playerBanner.tl.fadeIn(20).delay(30).fadeOut(10).then(function() {
+              game.currentScene.removeChild(playerBanner);
+
+              var resultBanner = new Sprite(512, 256);
+              resultBanner.image = game.assets[uiWin];
+              resultBanner.opacity = 0;
+              resultBanner.x = 480 -256;
+              resultBanner.y = 320 -128;
+              game.currentScene.addChild(resultBanner);
+
+              /**Sprite.tl.fadeIn(フェイドインにかかる時間).delay(待つ時間).fadeOut(フェイドアウトにかかる時間).then(function(){
+          *    その後の動作
+          *  })
+          */
+              resultBanner.tl.fadeIn(20).delay(30).fadeOut(10).then(function(){
+                location.reload();
+              })
+            });
         } else {
 
         this.turnCounter++;
@@ -241,19 +258,17 @@ window.onload = function(){
             playerBanner.image = game.assets[uiPlayerBanner1];
         }
 
+        playerBanner.opacity = 0;
          playerBanner.x = 480 - 256;
          playerBanner.y = 320 - 128;
          game.currentScene.addChild(playerBanner);
 
          var self = this;
-
-        setTimeout(function() {          
-          utils.endUIShield();
-          self.startTurn();
-          game.currentScene.removeChild(playerBanner);
-        },1000);
-
-
+         playerBanner.tl.fadeIn(20).delay(30).fadeOut(10).then(function() {
+           self.startTurn();
+           utils.endUIShield();
+           game.currentScene.removeChild(playerBanner);
+         })
       }
     },
       getWinner: function() {
