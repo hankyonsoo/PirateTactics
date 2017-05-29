@@ -477,7 +477,7 @@ window.onload = function(){
           if(this.player.isActive()) {
             if(this.player.getActiveFune() == this) {
               //現在動かしている船を選択した場合
-              var　popup = new StatusWindow(this);
+              var　popup = new FunePopup(this);
               popup.onCancel = function() {
               //ウィンドウを閉じる
               }
@@ -1128,7 +1128,7 @@ window.onload = function(){
     /**
     * キャラクターのポップアップを表示
     */
-    var StatusWindow = Class.create(Scene, {
+    var FunePopup = Class.create(Scene, {
       initialize:function(fune) {
         Scene.call(this);
         game.pushScene(this);
@@ -1211,13 +1211,31 @@ window.onload = function(){
 
         windowGroup.addChild(cancelBtnSprite);
 
-        cancelBtnSprite.addEventListener(enchant.Event.TOUCH_END,
-          function(params){
-            game.popScene();
-            if(self.onCancel) {
-              self.onCancel();
-            }
-        });
+        windowGroup.originX = 256;
+        windowGroup.originY = 256;
+        windowGroup.scaleX = 0.7;
+        windowGroup.scaleY = 0.7;
+        windowGroup.tl.scaleTo(1,10, enchant.Easing.ELASTIC_EASEOUT).then(function() {
+          pirate.y = -50;
+          pirate.tl.moveBy(-50, -25,　5).and().fadeIn(10);
+
+          //戻るボタンを押したとき大きくなる効果を追加。
+          cancelBtnSprite.addEventListener(enchant.Event.TOUCH_START,function(params) {
+            cancelBtnSprite.tl.scaleTo(1.1,10,enchant.Easing.ELASTIC_EASEOUT)
+          });
+          //戻るボタンを押して離したとき効果を追加。
+          cancelBtnSprite.addEventListener(enchant.Event.TOUCH_END,function(params){
+            shieldSprite.tl.fadeTo(0, 5);
+            cancelBtnSprite.tl.scaleTo(0.9, 3).and().fadeTo(0, 5);
+            pirate.tl.fadeTo(0, 5);
+            windowSprite.tl.fadeTo(0, 5).then(function() {
+                    game.popScene();
+                    if(self.onCancel) {
+                      self.onCancel();
+                  }
+                });
+              });
+          });
       },
     })
 
