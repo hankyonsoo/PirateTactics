@@ -81,6 +81,12 @@ window.onload = function(){
     var uiPlayerBanner2 = "./resources/playerBanner2.png";
     game.preload(uiPlayerBanner2);
 
+    var uiWin = "./resources/win.png";
+    game.preload(uiWin);
+
+    var uiLose = "./resources/lose.png";
+    game.preload(uiLose);
+
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
     /**
@@ -147,6 +153,10 @@ window.onload = function(){
         return this.playerList[this.turnCounter % this.playerList.length];
       },
 
+      getNonActivePlayer:function() {
+        return this.playerList[(this.turnCounter + 1) % this.playerList.length];
+      },
+
       beginGame: function() {
         //プレイヤー１をアクティブにする
         var player1 = this.playerList[0];
@@ -203,6 +213,25 @@ window.onload = function(){
         /**
         * 現在のプレイヤーを非アクディブにしてターンカウンターを1つ増やし次のターンを開始する。
         */
+
+        var winner = this.getWinner();
+        if (winner) {
+          var playerBanner = new Sprite(512, 256);
+          if (player.id == 1) {
+            playerBanner.image = game.assets[uiWin];
+          } else if (player.id == 2) {
+            playerBanner.image = game.assets[uiLose];
+          }
+
+          playerBanner.x = 480 -256;
+          playerBanner.y = 320 -128;
+          game.currentScene.addChild(playerBanner);
+
+          setTimeout(function() {
+            location.reload();
+          }, 3000);
+        } else {
+
         this.turnCounter++;
         var playerBanner = new Sprite(512,256);
         console.log(player.id);
@@ -216,14 +245,28 @@ window.onload = function(){
          playerBanner.y = 320 - 128;
          game.currentScene.addChild(playerBanner);
 
+         var self = this;
 
-
-        setTimeout(function() {
+        setTimeout(function() {          
           utils.endUIShield();
+          self.startTurn();
           game.currentScene.removeChild(playerBanner);
         },1000);
 
-          this. startTurn();
+
+      }
+    },
+      getWinner: function() {
+        if (this.getActivePlayer().getFuneCount() == 0) {
+          if(this.getNonActivePlayer().getFuneCount() == 0) {
+            return this.getActivePlayer();
+          } else {
+            return this.getNonActivePlayer();
+          }
+        } else if (this.getNonActivePlayer().getFuneCount() == 0) {
+          return this.getActivePlayer();
+        }
+        return null;
       },
     })
 
