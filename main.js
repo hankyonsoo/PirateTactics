@@ -98,10 +98,10 @@ window.onload = function(){
     var sndClick = "./resources/sound/se2.wav";
     game.preload(sndClick);
 
-    var sndExplosion = "./resources/sound/bomb1.wav";
+    var sndExplosion = "./resources/sound/shot2.wav";
     game.preload(sndExplosion);
 
-    var sndSinkShip = "./resources/sound/bomb2.wav";
+    var sndSinkShip = "./resources/sound/bomb4.wav";
     game.preload(sndSinkShip);
 
     var sndChangeShips = "./resources/sound/se4.wav";
@@ -226,6 +226,7 @@ window.onload = function(){
         this.map.drawMovementRange();
         this.turnUI.updateTurn(this.turnCounter);
         this.turnUI.updatePlayer(this.getActivePlayer().getData("name"));
+        this.sndManager.playFX(sndChangeShips);
       },
 
       endTurn: function() {//ターン終了
@@ -459,11 +460,10 @@ window.onload = function(){
           var explosion = new Explosion();
           explosion.x = otherFune.x + 32;
           explosion.y = otherFune.y + 32;
-
+          this.player.controller.sndManager.playFX(sndExplosion);
           game.currentScene.addChild(explosion);
 
             if (afterHp <= 0) {
-              alert("沈没した!");
               otherFune.sinkShip();
           }
         } else {
@@ -519,6 +519,7 @@ window.onload = function(){
       },
 
       sinkShip: function() {
+        this.player.controller.sndManager.playFX(sndSinkShip);
         this.player.removeFune(this);
         this.fune.frame = this.fune.sinkFrame;
         this.counter=1;
@@ -1259,6 +1260,8 @@ window.onload = function(){
       initialize:function(fune) {
         Scene.call(this);
         game.pushScene(this);
+
+        fune.player.controller.sndManager.playFX(sndClick);
 
         var shieldSprite = new Sprite(960, 640);
         shieldSprite.image = game.assets[ui1x1Black];
