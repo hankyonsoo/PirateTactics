@@ -825,6 +825,13 @@ window.onload = function(){
         tiles.addEventListener(enchant.Event.TOUCH_MOVE, function(params){
             self.ontouchupdate(params)
         });
+
+        tiles.addEventListener(enchant.Event.ENTER_FRAME, function(params){
+          /**
+          * マップのレイヤーの順番を決める。
+          */
+            self.zsort();
+        })
       },
 
       setController: function(controller) {
@@ -901,7 +908,20 @@ window.onload = function(){
       },
       positionFune: function(fune, i, j) {
         this.positonObject(fune, i, j);
+        //特定の船を特定の位置に移す。
       },
+
+      moveFune: function(fune, i, j, onEnd) {
+          var position = this.getMapPositionAtTile(i, j);
+          var worldPosition = this.toWorldSpace(position.localX, position.localY);
+          var distance = utils.getEuclideanDistance(fune.i, fune.j, i, j);
+
+          fune.i = i;
+          fune.j = j;
+
+          fune.tl.moveTo(worldPosition.x, worldPosition.y, distance*10, enchant.Easing.QUAD_EASEINOUT).then(onEnd);
+      },
+
       setActiveFune: function(fune) {
         fune.map = this;
         this.activeFune = fune;
@@ -993,6 +1013,31 @@ window.onload = function(){
           }
         }
       },
+
+      zsort: function() {
+        var zorder = [];
+        for (var c=0; c < this.playLayer.childNodes.length; ++c) {
+          zorder.push(this.playLayer.childNodes[c]);
+        }
+        zorder.sort(function(a,b) {
+          if (a.y > b.y) {
+            return 1;
+          } else if (a.y == b.y) {
+            if (a.x > b.x) {
+              return 1;
+            } else if (a.x == b.x) {
+              return 0;
+            } else {
+              return -1;
+            }
+          } else {
+            return -1;
+          }
+        });
+        for (var i=0; i < zorder.length; ++i) {
+          this.playLayer.addChild(zorder[i]);
+        }
+      },
       ontouchend:function(params) {
         if (this.mapMarker) {
             this.overLayer.removeChild(this.mapMarker)
@@ -1044,8 +1089,11 @@ window.onload = function(){
             return;
           }
           if (this.getManhattanDistance(this.activeFune.i, this.activeFune.j, tile.i, tile.j) <= this.activeFune.getMovement()) {
-            this.positionFune(this.activeFune, tile.i, tile.j);
-            this.controller.endTurn();
+            var self = this;
+            utils.beginUIShield();
+            self.moveFune(self.activeFune, tile.i, tile.j, function(){
+                self.controller.endTurn();
+            });
           } else {
               alert("移動化の範囲を超えています。");
           }
@@ -1225,6 +1273,7 @@ window.onload = function(){
           });
           //戻るボタンを押して離したとき効果を追加。
           cancelBtnSprite.addEventListener(enchant.Event.TOUCH_END,function(params){
+            //船のステータスがゆっくり消えるように設定
             shieldSprite.tl.fadeTo(0, 5);
             cancelBtnSprite.tl.scaleTo(0.9, 3).and().fadeTo(0, 5);
             pirate.tl.fadeTo(0, 5);
