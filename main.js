@@ -90,6 +90,24 @@ window.onload = function(){
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
     /**
+    * Audio
+    */
+    var sndBGM = "./resources/music/highseas.mp3";
+    game.preload(sndBGM);
+
+    var sndClick = "./resources/sound/se2.wav";
+    game.preload(sndClick);
+
+    var sndExplosion = "./resources/sound/bomb1.wav";
+    game.preload(sndExplosion);
+
+    var sndSinkShip = "./resources/sound/bomb2.wav";
+    game.preload(sndSinkShip);
+
+    var sndChangeShips = "./resources/sound/se4.wav";
+    game.preload(sndChangeShips);
+
+    /**
      * Map のマスの定義
      */
     var tileTypes = {
@@ -114,6 +132,8 @@ window.onload = function(){
       *プレイヤーを人数を増やしやすくするため配列に宣言する。
       */
         this.turnCounter = 0;
+
+        this.sndManager = new SoundManager();
       },
 
       addPlayer: function(player){
@@ -182,6 +202,8 @@ window.onload = function(){
           this.map.positionFune(fune, startPosition.i, startPosition.j);
 
         }
+
+        this.sndManager.playBGM();
 
         this.startTurn();
       },
@@ -717,6 +739,63 @@ window.onload = function(){
             this.controller.updateTurn();
         },
     });
+
+    /**
+    * オーディオ管理
+    */
+    var SoundManager = Class.create({
+      initialize: function(){
+        this.volume = 0.5;
+        this.bgmPlaying = false;
+      },
+
+      playBGM: function() {
+        this.bgmPlaying = true;
+
+        game.assets[sndBGM].play();
+        game.assets[sndBGM].volume = this.volume;
+      },
+
+      playFX: function(name) {
+        var fx = game.assets[name].clone();
+        fx.play();
+        fx.volume = this.volume;
+      },
+
+      pauseBGM: function() {
+        this.bgmPlaying = false;
+        game.assets[sndBGM].pause();
+      },
+
+      stopBGM: function() {
+        this.bgmPlaying = false;
+        game.assets[sndBGM].stop();
+      },
+
+      volumeUp: function() {
+        this.volume += 0.05;
+        if (this.volume > 1) {
+          this.volume = 1;
+        };
+        console.log("volume", this.volume);
+        game.assets[sndBGM].volume = this.volume;
+        this.playFX(sndClick);
+      },
+
+      volumeUp: function() {
+        this.volume -= 0.05;
+        if (this.volume < 0) {
+          this.volume = 0;
+        };
+        console.log("volume", this.volume);
+        game.assets[sndBGM].volume = this.volume;
+        this.playFX(sndClick);
+      },
+
+      getVolume: function() {
+        return this.volume;
+      },
+    })
     /**
     * マップクラス
     */
