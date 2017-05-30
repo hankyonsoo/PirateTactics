@@ -87,6 +87,12 @@ window.onload = function(){
     var uiLose = "./resources/lose.png";
     game.preload(uiLose);
 
+    var uiArrowSprite = "./resources/arrow.png";
+    game.preload(uiArrowSprite);
+
+    var uiSettingsSprite = "./resources/settings.png";
+    game.preload(uiSettingsSprite);
+
     var fontStyle = "32px 'ＭＳ ゴシック', arial, sans-serif";
 
     /**
@@ -152,11 +158,12 @@ window.onload = function(){
         this.map = map;
       },
 
-      setTurnUI: function(ui) {
+      setFrameUI: function(ui) {
         /**
         *ターンを表示の追加メソッド
         */
-        this.turnUI = ui;
+        this.frameUI = ui;
+        ui.manager = this;
       },
 
       setStartPositions: function(startPositions) {
@@ -224,8 +231,8 @@ window.onload = function(){
         */
         this.map.setActiveFune(this.getActivePlayer().getActiveFune());
         this.map.drawMovementRange();
-        this.turnUI.updateTurn(this.turnCounter);
-        this.turnUI.updatePlayer(this.getActivePlayer().getData("name"));
+        this.frameUI.updateTurn(this.turnCounter);
+        this.frameUI.updatePlayer(this.getActivePlayer().getData("name"));
         this.sndManager.playFX(sndChangeShips);
       },
 
@@ -306,6 +313,9 @@ window.onload = function(){
         }
         return null;
       },
+      openSettings: function() {
+        new SettingsWindow(this);
+      }
     })
 
     /**
@@ -783,7 +793,7 @@ window.onload = function(){
         this.playFX(sndClick);
       },
 
-      volumeUp: function() {
+      volumeDown: function() {
         this.volume -= 0.05;
         if (this.volume < 0) {
           this.volume = 0;
@@ -1226,7 +1236,7 @@ window.onload = function(){
     /**
     *　ターン関係の情報を表示するクラス
     */
-    var TurnUI = Class.create(Label, {
+    var FrameUI = Class.create(Label, {
       initialize: function(scene) {
         var fontColor = "rgba(20, 20, 255, 1.0)"
 
@@ -1244,6 +1254,30 @@ window.onload = function(){
         this.playerLabel.y = 640-50;
         this.playerLabel.font = "32px 'ＭＳ ゴシック', arial, sans-serif";
         this.playerLabel.color = fontColor;
+
+        this.settingsButton = new Sprite(64, 64);
+        scene.addChild(this.settingsButton);
+        this.settingsButton.image = game.assets[uiSettingsSprite];
+        this.settingsButton.x = 64*14;
+        this.settingsButton.y = 640 -64;
+
+        this.settingLabel = new Label();
+        scene.addChild(this.settingLabel);
+        this.settingLabel.x = 64*14;
+        this.settingLabel.y = 640 - 80;
+        this.settingLabel.font = "bold 16px 'sans-serif'";
+        this.settingLabel.color = "rgb(255, 255, 0)";
+        this.settingLabel.text = "音量調整";
+
+        var self = this;
+        this.settingsButton.addEventListener(enchant.Event.TOUCH_START,function(params) {
+          self.settingsButton.tl.scaleTo(1.1, 10, enchant.Easing.ELASTIC_EASEOUT);
+          new SettingsWindow(self.manager);
+        });
+
+        this.settingsButton.addEventListener(enchant.Event.TOUCH_END,function(params) {
+          self.settingsButton.tl.scaleTo(1.0, 3);
+        });
       },
       updateTurn: function(turn) {
         this.turnLabel.text = "ターン:"+turn;
@@ -1253,6 +1287,126 @@ window.onload = function(){
       },
     })
 
+    /**
+    * キャラのポップアップウィンドー
+    */
+  var SettingsWindow = Class.create(Scene, {
+      initialize: function(gameManager) {
+        Scene.call(this);
+        game.pushScene(this);
+
+        gameManager.sndManager.playFX(sndClick);
+
+        var shieldSprite = new Sprite(960, 640);
+        shieldSprite.image = game.assets[ui1x1Black];
+        shieldSprite.opacity = 0.5;
+        this.addChild(shieldSprite);
+
+        var windowGroup = new Group();
+        windowGroup.x = (960 -512)/2;
+        windowGroup.y = (640 -512)/2;
+        this.addChild(windowGroup);
+
+        var windowSprite = new Sprite(512, 512);
+        windowSprite.image = game.assets[uiWindowSprite];
+        windowGroup.addChild(windowSprite);
+
+        var settingsGroup = new Group();
+        settingsGroup.x = 64;
+        settingsGroup.y = 32;
+        windowGroup.addChild(settingsGroup);
+
+        var fontColor = "rgba(255, 255, 205, 1.0)";
+
+        soundLabel = new Label("音量");
+        settingsGroup.addChild(soundLabel);
+        soundLabel.x = 0;
+        soundLabel.y = 16;
+        soundLabel.font = fontStyle;
+        soundLabel.color = fontColor;
+
+        var sndUpButton = new Sprite(64, 64);
+        settingsGroup.addChild(sndUpButton);
+        sndUpButton.x = 64 *4;
+        sndUpButton.y = 0;
+        sndUpButton.image = game.assets[uiArrowSprite];
+
+        var isKeyPressed = false;
+        sndUpButton.addEventListener(enchant.Event.TOUCH_START, function(params){
+          if (gameManager.sndManager.getVolume() <1) {
+            if(isKeyPressed == false) {
+              isKeyPressed = true;
+              sndUpButton.tl.scaleTo(1.1, 10, enchant.Easing.ELASTIC_EASEOUT);
+            }
+          }
+        });
+
+        sndUpButton.addEventListener(enchant.Event.TOUCH_END, function(params){
+          if (gameManager.sndManager.getVolume() <1) {
+            if(isKeyPressed == true) {
+              gameManager.sndManager.volumeUp();
+              sndUpButton.tl.scaleTo(1.0, 3).then(function(){
+                isKeyPressed = false;
+              });
+            }
+          }
+        });
+
+        var sndDownButton = new Sprite(64, 64);
+        settingsGroup.addChild(sndDownButton);
+        sndDownButton.x = 64 *5 + 5;
+        sndDownButton.y = 0;
+        sndDownButton.rotation = 180;
+        sndDownButton.image = game.assets[uiArrowSprite];
+
+        sndDownButton.addEventListener(enchant.Event.TOUCH_START, function(params){
+          if (gameManager.sndManager.getVolume() > 0) {
+            if(isKeyPressed == false) {
+              isKeyPressed = true;
+              sndDownButton.tl.scaleTo(1.1, 10, enchant.Easing.ELASTIC_EASEOUT);
+            }
+          }
+        });
+
+        sndDownButton.addEventListener(enchant.Event.TOUCH_END, function(params){
+          if (gameManager.sndManager.getVolume() > 0) {
+            if(isKeyPressed == true) {
+              gameManager.sndManager.volumeDown();
+              sndDownButton.tl.scaleTo(1.0, 3).then(function(){
+                isKeyPressed = false;
+                    });
+                }
+            }
+        });
+
+        var self = this;
+        var cancelBtnSprite = new Sprite(128, 64);
+        cancelBtnSprite.image = game.assets[uiCancelBtnSprite];
+        cancelBtnSprite.x = 64;
+        cancelBtnSprite.y = 512 - 64 -32;
+
+        windowGroup.addChild(cancelBtnSprite);
+
+        windowGroup.originX = 256;
+        windowGroup.originY = 256;
+        windowGroup.scaleX = 0.7;
+        windowGroup.scaleY = 0.7;
+        windowGroup.tl.scaleTo(1, 10, enchant.Easing.ELASTIC_EASEOUT).then(function() {
+          cancelBtnSprite.addEventListener(enchant.Event.TOUCH_START, function(params) {
+            cancelBtnSprite.tl.scaleTo(1.1, 10, enchant.Easing.ELASTIC_EASEOUT);
+          });
+
+          cancelBtnSprite.addEventListener(enchant.Event.TOUCH_END, function(params){
+            shieldSprite.tl.fadeTo(0, 5);
+            cancelBtnSprite.tl.scaleTo(0.9, 3).and().fadeTo(0, 5);
+            windowSprite.tl.fadeTo(0, 5).then(function() {
+              gameManager.sndManager.playFX(sndClick);
+              game.popScene();
+            });
+          });
+        });
+      },
+    })
     /**
     * キャラクターのポップアップを表示
     */
@@ -1394,8 +1548,8 @@ window.onload = function(){
         manager.setMap(map);
 
         //ターンのUIを追加
-        var turnUI = new TurnUI(sceneGameMain);
-        manager.setTurnUI(turnUI);
+        var frameUI = new FrameUI(sceneGameMain);
+        manager.setFrameUI(frameUI);
 
         //プレイヤー１をゲームマネージャーに追加
         var player1 = new GamePlayer(1, {name:"プレイヤー1"});
