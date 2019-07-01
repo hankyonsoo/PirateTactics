@@ -329,6 +329,7 @@ window.onload = function(){
 
         this.counter = 0;
       },
+
       onenterframe:function() {
         this.counter++;
         if (this.counter == 9 ) {
@@ -763,6 +764,12 @@ window.onload = function(){
         this.bgmPlaying = true;
 
         game.assets[sndBGM].play();
+        // srcプロパティ有無確認
+        if(game.assets[sndBGM].src) {
+          game.assets[sndBGM].src.loop = true;
+        } else {
+          gmae.currentScene.addChild(this);
+        }
         game.assets[sndBGM].volume = this.volume;
       },
 
@@ -805,6 +812,12 @@ window.onload = function(){
       getVolume: function() {
         return this.volume;
       },
+
+      onenterframe: function() {
+        if (this.bgmPlaying) {
+          game.asstes[sndBGM].play();
+        }
+      }
     })
     /**
     * マップクラス
