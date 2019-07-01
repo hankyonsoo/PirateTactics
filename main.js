@@ -281,7 +281,6 @@ window.onload = function(){
 
         this.turnCounter++;
         var playerBanner = new Sprite(512,256);
-        console.log(player.id);
         if(player.id == 1) {
             playerBanner.image = game.assets[uiPlayerBanner2];
         } else if(player.id == 2) {
@@ -788,7 +787,7 @@ window.onload = function(){
         if (this.volume > 1) {
           this.volume = 1;
         };
-        console.log("volume", this.volume);
+
         game.assets[sndBGM].volume = this.volume;
         this.playFX(sndClick);
       },
@@ -798,7 +797,7 @@ window.onload = function(){
         if (this.volume < 0) {
           this.volume = 0;
         };
-        console.log("volume", this.volume);
+
         game.assets[sndBGM].volume = this.volume;
         this.playFX(sndClick);
       },
